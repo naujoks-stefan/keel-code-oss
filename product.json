@@ -233,5 +233,21 @@
 	],
 	"builtInExtensionsEnabledWithAutoUpdates": [
 		"GitHub.copilot-chat"
-	]
+	],
+	"aiConfig": {},
+	"downloadUrl": "",
+	"updateUrl": "",
+	"sendASmile": {},
+	"surveys": [],
+	"releaseNotesUrl": "",
+	"darwinUniversalAssetId": "",
+	"keyboardShortcutsUrlMac": "",
+	"keyboardShortcutsUrlLinux": "",
+	"keyboardShortcutsUrlWin": "",
+	"introductoryVideosUrl": "",
+	"tipsAndTricksUrl": "",
+	"newsletterSignupUrl": "",
+	"youTubeUrl": "",
+	"requestFeatureUrl": "",
+	"privacyStatementUrl": ""
 }
