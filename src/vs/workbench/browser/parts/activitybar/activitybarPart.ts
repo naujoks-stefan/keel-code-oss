@@ -394,16 +394,22 @@ export class ActivityBarCompositeBar extends PaneCompositeBar {
 		// View Containers action bar
 		this.compositeBarContainer = super.create(this.element);
 
-		// Keel (D-025): Cockpit-Anker als Geschwister-Element der ViewContainer-
-		// Action-Bar INNERHALB des `.composite-bar`-Containers einhaengen. Damit
-		// landet der Anker im selben Slot-Fluss wie das letzte ViewContainer-Icon
-		// (z.B. Marketplace) - buendig direkt darunter, ohne Spacer-Gap und mit
-		// identischer Slot-Breite/Hoehe (48px, erbt ueber --activity-bar-width /
-		// --activity-bar-action-height). Der frueher genutzte Mount in
-		// `this.element` (zwischen `.composite-bar` und GlobalCompositeBar) fiel
-		// durch `margin-bottom: auto` auf `.composite-bar` in die Spacer-Mitte -
-		// visuell falsch. Disposable wird am CompositeBar-Lifecycle registriert,
-		// damit Kompakt-Toggle den Anker sauber aufraeumt.
+		// Keel (D-025, Welle 10 Iteration 3): Cockpit-Anker als Geschwister-
+		// Element der ViewContainer-Action-Bar INNERHALB des `.composite-bar`-
+		// Containers einhaengen. Iteration 3 repliziert die exakte Upstream-
+		// DOM-Struktur eines Action-Items (`.monaco-action-bar.vertical >
+		// ul.actions-container > li.action-item.icon > a.action-label.codicon
+		// .codicon-dashboard`) - so greifen die Upstream-CSS-Selektoren aus
+		// `activityaction.css` (Slot-Sizing, Icon-Groesse, Aktiv-Border) 1:1
+		// auf den Anker, und er erscheint mit derselben Hoehe/Breite/Icon-
+		// Groesse wie das letzte ViewContainer-Icon (z.B. Marketplace).
+		// Iteration 2 hatte mit einem generischen `<div>` die richtige Position
+		// erreicht, aber wegen des strikten `.monaco-action-bar .action-label`-
+		// Scopes der Upstream-Regeln fiel das Icon auf die Codicon-Default-
+		// Groesse (16 px) zurueck und wirkte ~50 % zu klein. Iteration 1 hatte
+		// den Anker ans Ende von `.content` gesetzt (neben GlobalCompositeBar).
+		// Disposable wird am CompositeBar-Lifecycle registriert, damit
+		// Kompakt-Toggle den Anker sauber aufraeumt.
 		this._register(KeelCockpitAnchor.mount(this.instantiationService, this.compositeBarContainer));
 
 		// Global action bar

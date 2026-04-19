@@ -4,51 +4,57 @@
  *--------------------------------------------------------------------------------------------*/
 
 /*
- * Cockpit-Anker in der Activity-Bar (Welle 10, D-025).
+ * Cockpit-Anker in der Activity-Bar (Welle 10, D-025, Iteration 3).
  *
- * Der Anker wird vom chirurgischen Patch in `ActivityBarCompositeBar.create()`
- * INNERHALB des `.composite-bar`-Containers eingehaengt, als direkter Kind
- * (Geschwister zum `.monaco-action-bar`, der die ViewContainer-Icons listet).
- * Dadurch reiht er sich im Block-Flow direkt unter das letzte ViewContainer-
- * Item (z.B. Marketplace) ein - buendig, ohne Spacer-Gap und mit identischer
- * Slot-Breite/Hoehe. Er erbt die Activity-Bar-Konventionen (48px hoch, 24px
- * Icon) ueber die Upstream-CSS-Variablen `--activity-bar-width` /
- * `--activity-bar-action-height` / `--activity-bar-icon-size`, die
- * ActivityBarPart beim Umschalten zwischen Standard- und Kompakt-Modus
- * aktualisiert. So skaliert der Anker automatisch mit.
+ * Iteration 3 bettet den Anker in die exakte Upstream-DOM-Struktur eines
+ * Activity-Bar-Action-Items ein (`.monaco-action-bar.vertical >
+ * ul.actions-container > li.action-item.icon > a.action-label.codicon`).
+ * Dadurch uebernehmen alle bestehenden Upstream-Regeln aus
+ * `activityaction.css` das Sizing:
+ *
+ * - `.action-label { width: var(--activity-bar-width, 48px); height:
+ *   var(--activity-bar-action-height, 48px); }` -> Slot-Dimensionen
+ *   identisch zu Marketplace.
+ * - `.action-label.codicon { font-size: var(--activity-bar-icon-size,
+ *   24px); }` -> Icon-Groesse identisch zu Marketplace (24 px, im
+ *   Kompakt-Modus 16 px).
+ * - `.action-item.checked .active-item-indicator:before { border-left:
+ *   2px solid; border-left-color: <theme color>; }` -> Akzent-Border
+ *   identisch zu Marketplace.
+ *
+ * Diese Datei enthaelt nur noch die beiden Feintuning-Deklarationen, die
+ * ueber das Upstream-Default hinausgehen:
+ *
+ * 1. Der aeussere `.monaco-action-bar.vertical`-Wrapper bekommt via
+ *    `margin-bottom: 0` einen expliziten Reset. Upstream setzt auf
+ *    `.composite-bar` ein `margin-bottom: auto`, was aber nicht auf den
+ *    zweiten Action-Bar-Wrapper greift - trotzdem sicher explizit halten.
+ * 2. Das `li.action-item` haengt im Block-Flow direkt unter dem letzten
+ *    ViewContainer-Action-Item. Keine Zusatz-Abstaende noetig - die
+ *    Upstream-Slots sind bereits randlos aneinandergereiht.
  */
 
-.keel-cockpit-anchor {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: var(--activity-bar-width, 48px);
-	height: var(--activity-bar-action-height, 48px);
-	min-height: var(--activity-bar-action-height, 48px);
-	box-sizing: border-box;
-	cursor: pointer;
-	outline: none;
-	color: var(--vscode-activityBar-inactiveForeground);
-	border-left: 2px solid transparent;
-	position: relative;
-	flex: 0 0 auto;
+/*
+ * Aeusseres Action-Bar-Fragment als direkter Kind der `.composite-bar`. Das
+ * Margin-Reset verhindert, dass sich das Fragment unter bestimmten
+ * Eltern-Flex-Konstellationen doch noch nach unten schiebt. Keine weiteren
+ * Layout-Regeln - Breite und Hoehe werden vom `li.action-item` / der
+ * `a.action-label` ueber die Upstream-Regeln bestimmt.
+ */
+.keel-cockpit-anchor-bar {
+	margin-bottom: 0;
 }
 
-.keel-cockpit-anchor:hover {
-	color: var(--vscode-activityBar-foreground);
-}
-
-.keel-cockpit-anchor:focus-visible {
-	border-left-color: var(--vscode-focusBorder);
-}
-
-.keel-cockpit-anchor.keel-cockpit-anchor-active {
-	color: var(--vscode-activityBar-foreground);
-	border-left-color: var(--vscode-activityBar-activeBorder);
-	background-color: var(--vscode-activityBar-activeBackground);
-}
-
-.keel-cockpit-anchor-icon {
-	font-size: var(--activity-bar-icon-size, 24px);
-	line-height: 1;
-}
+/*
+ * Das Action-Item ist ein `<li>` und erbt ueber die Upstream-Regel
+ * `.action-item { display: block; position: relative; cursor: pointer; }`
+ * die Grund-Pointer-Semantik. Die `.icon`-Markerklasse bewirkt, dass die
+ * Upstream-Styling-Pfade fuer Icon-Items greifen. Keine eigenen
+ * Layout-Regeln noetig.
+ *
+ * Outline aus dem Keel-Namespace: Upstream unterdrueckt das Default-Outline
+ * zugunsten des `.active-item-indicator`-Borders (siehe
+ * `activitybarpart.css`: `.activitybar .action-item:focus { outline: 0
+ * !important; }`). Dieser Selektor greift fuer uns automatisch, weil unser
+ * `li.action-item` im Activity-Bar-Scope sitzt.
+ */
