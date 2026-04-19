@@ -21,10 +21,64 @@ import { localize } from '../../../../nls.js';
  * ersetzt.
  */
 export const keelCockpitStrings = {
-	// --- Header ---
+	// --- Header (Welle 9: Projekt-Header ersetzt den alten Workspace-Header) ---
+	// Bleibt als Fallback fuer Tests, wird in der View nicht mehr gerendert.
 	// allow-any-unicode-next-line
 	headerTitle: (): string => localize('keel.cockpit.header.title', "Dein Arbeitsbereich"),
 	headerNewTask: (): string => localize('keel.cockpit.header.newTask', "+ Neuer Auftrag"),
+
+	// --- Projekt (Welle 9) ---
+	// allow-any-unicode-next-line
+	projectDefaultName: (): string => localize('keel.project.default.name', "Mein Arbeitsbereich"),
+	projectHeaderTitle: (projectName: string): string =>
+		localize('keel.project.header.title', "{0}", projectName),
+	projectHeaderNewTask: (): string =>
+		localize('keel.project.header.newTask', "+ Neuer Auftrag"),
+	projectHeaderNewTaskAria: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.project.header.newTask.aria', "Neuen Auftrag starten"),
+	projectRenameMenuItem: (): string =>
+		localize('keel.project.rename.menu.item', "Umbenennen"),
+	projectRenameAriaChevron: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.project.rename.aria.chevron', "Projekt-Optionen oeffnen"),
+	projectRenameInvalid: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.project.rename.invalid', "Der Projekt-Name darf nicht leer sein."),
+	projectRenamePlaceholder: (): string =>
+		localize('keel.project.rename.placeholder', "Projekt-Name..."),
+
+	// --- Projektleiter-Card (Welle 9) ---
+	projectLeadTitle: (): string => localize('keel.project.coordinator.title', "Projektleiter"),
+	projectLeadAria: (statusText: string): string =>
+		// allow-any-unicode-next-line
+		localize('keel.project.coordinator.aria', "Projektleiter, {0}", statusText),
+	projectLeadStatusIdle: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.project.coordinator.status.idle', "Bereit fuer deinen ersten Auftrag"),
+	projectLeadStatusActiveOne: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.project.coordinator.status.active.one', "Koordiniert 1 Auftrag fuer dich"),
+	projectLeadStatusActiveMany: (count: number): string =>
+		// allow-any-unicode-next-line
+		localize('keel.project.coordinator.status.active.many', "Koordiniert {0} Auftraege fuer dich", String(count)),
+	projectLeadStatusWaitingOne: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.project.coordinator.status.waiting.one', "Wartet auf deine Freigabe bei 1 Auftrag"),
+	projectLeadStatusWaitingMany: (count: number): string =>
+		// allow-any-unicode-next-line
+		localize('keel.project.coordinator.status.waiting.many', "Wartet auf deine Freigabe bei {0} Auftraegen", String(count)),
+	projectLeadAggregateActive: (count: number): string =>
+		localize('keel.project.coordinator.aggregate.active', "{0} aktiv", String(count)),
+	projectLeadAggregateWaiting: (count: number): string =>
+		// allow-any-unicode-next-line
+		localize('keel.project.coordinator.aggregate.waiting', "{0} wartet", String(count)),
+
+	// --- Sub-Task-Zone (Welle 9) ---
+	subTaskZoneChip: (): string => localize('keel.project.subtaskZone.chip', "Auftraege"),
+	subTaskZoneChipAria: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.project.subtaskZone.chip.aria', "Auftraege vom Projektleiter"),
 
 	// --- Queue-Indicator ---
 	// allow-any-unicode-next-line
