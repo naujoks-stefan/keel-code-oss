@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 /*
- * Cockpit-Anker in der Activity-Bar (Welle 10, D-025, Iteration 3).
+ * Cockpit-Anker in der Activity-Bar (Welle 10, D-025, Iteration 3 + 4).
  *
  * Iteration 3 bettet den Anker in die exakte Upstream-DOM-Struktur eines
  * Activity-Bar-Action-Items ein (`.monaco-action-bar.vertical >
@@ -22,27 +22,51 @@
  *   2px solid; border-left-color: <theme color>; }` -> Akzent-Border
  *   identisch zu Marketplace.
  *
- * Diese Datei enthaelt nur noch die beiden Feintuning-Deklarationen, die
- * ueber das Upstream-Default hinausgehen:
+ * --- Iteration 4 (2026-04-19, Welle-10-Hotfix): 48-px-Gap-Fix ---
  *
- * 1. Der aeussere `.monaco-action-bar.vertical`-Wrapper bekommt via
- *    `margin-bottom: 0` einen expliziten Reset. Upstream setzt auf
- *    `.composite-bar` ein `margin-bottom: auto`, was aber nicht auf den
- *    zweiten Action-Bar-Wrapper greift - trotzdem sicher explizit halten.
- * 2. Das `li.action-item` haengt im Block-Flow direkt unter dem letzten
- *    ViewContainer-Action-Item. Keine Zusatz-Abstaende noetig - die
- *    Upstream-Slots sind bereits randlos aneinandergereiht.
+ * Nach Iteration 3 sass der Anker optisch korrekt in Breite/Hoehe/Icon-
+ * Groesse, aber zwischen Marketplace-Item (y=35, h=48, Ende=y=83) und
+ * Cockpit-Anker (y=131, h=48) klaffte ein 48-px-Spacer. Ursache: Die
+ * Upstream-CSS-Regel `.monaco-action-bar { height: 100% }` in
+ * `base/browser/ui/actionbar/actionbar.css` laesst den *ersten* Action-Bar-
+ * Wrapper (die ViewContainer-Bar mit Marketplace) die volle `.composite-bar`-
+ * Hoehe einnehmen. `.composite-bar` wiederum misst sich am Inhalt - und
+ * der Inhalt sind jetzt ZWEI Action-Bars (Marketplace + Cockpit-Anker),
+ * also 96 px. Damit wird der erste Bar 96 px hoch (obwohl er nur 1 li von
+ * 48 px enthaelt), der Cockpit-Anker-Bar reiht sich danach ein und landet
+ * bei y=131 statt y=83.
+ *
+ * Fix: Ein Slot-Offset nach oben auf dem Cockpit-Anker-Bar. Der negative
+ * `margin-top` zieht den Wrapper visuell um eine Slot-Hoehe nach oben und
+ * neutralisiert damit den durch `height: 100%` aufgeblaehten Leer-Slot
+ * des ersten Bars. Funktioniert, weil weder `.composite-bar` noch
+ * `.activitybar > .content` ein `overflow: hidden` haben (Stand 2026-04-19)
+ * und der Wrapper sich damit ueber den unteren Teil des ersten Bars
+ * ueberlappen darf.
+ *
+ * HINWEIS: Dies ist ein CSS-Pflaster, kein Wurzel-Fix. Die saubere Wurzel-
+ * Loesung waere, die zirkulaere `height: 100%`-Kette in
+ * `.monaco-action-bar` / `.actions-container` zu durchbrechen, wenn eine
+ * Composite-Bar mehrere Action-Bars enthaelt. Das ist ein Upstream-
+ * Verhalten, das wir in einer zukuenftigen Welle (Option B) evaluieren
+ * koennen. Siehe TODO unten.
  */
 
 /*
  * Aeusseres Action-Bar-Fragment als direkter Kind der `.composite-bar`. Das
  * Margin-Reset verhindert, dass sich das Fragment unter bestimmten
- * Eltern-Flex-Konstellationen doch noch nach unten schiebt. Keine weiteren
- * Layout-Regeln - Breite und Hoehe werden vom `li.action-item` / der
- * `a.action-label` ueber die Upstream-Regeln bestimmt.
+ * Eltern-Flex-Konstellationen doch noch nach unten schiebt. Der negative
+ * Top-Margin kompensiert den zirkular aufgeblaehten Reserve-Slot des
+ * ersten Action-Bars (siehe Block-Kommentar oben).
+ *
+ * TODO (Welle 11): Wurzel-Fix pruefen - entweder einen Upstream-Patch in
+ * `base/browser/ui/actionbar/actionbar.css` (height: 100% conditional) oder
+ * einen Hook in `CompositeBar#create()`, der bei mehreren Action-Bars die
+ * Hoehen-Berechnung auf `height: auto` umstellt.
  */
 .keel-cockpit-anchor-bar {
 	margin-bottom: 0;
+	margin-top: calc(-1 * var(--activity-bar-action-height, 48px));
 }
 
 /*
