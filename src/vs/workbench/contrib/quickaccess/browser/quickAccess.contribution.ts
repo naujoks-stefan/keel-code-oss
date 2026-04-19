@@ -113,7 +113,10 @@ MenuRegistry.appendMenuItem(MenuId.EditorContext, {
 //#region Workbench actions and commands
 
 registerAction2(ClearCommandHistoryAction);
-registerAction2(ShowAllCommandsAction);
+// Command-Palette (Ctrl+Shift+P / F1) — DISABLED by Keel (D-006): Otto-UX-Prinzip
+// "keine Command-Palette als primaeres Interface". Power-User-Modus kann spaeter
+// eine Keel-eigene Command-Palette mit kuratierten Commands anbieten.
+// registerAction2(ShowAllCommandsAction);
 registerAction2(OpenViewPickerAction);
 registerAction2(QuickAccessViewPickerAction);
 

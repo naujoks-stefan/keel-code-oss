@@ -308,10 +308,15 @@ import './contrib/output/browser/output.contribution.js';
 import './contrib/output/browser/outputView.js';
 
 // Terminal
+// Hinweis Keel: Das eingebaute Terminal bleibt REGISTRIERT, weil Tasks, Debug, Notebook
+// und ChatAgent-Tools hart auf terminalService / terminalGroupService depend.
+// P-010 (Terminal ausblenden) wird stattdessen in Phase A2 via View-Container-Hide
+// + Keybinding-Override geloest — siehe docs/FORK-DIVERGENCE.md "P-010 Ausblick".
 import './contrib/terminal/terminal.all.js';
 
-// External terminal
-import './contrib/externalTerminal/browser/externalTerminal.contribution.js';
+// External terminal — DISABLED by Keel (D-005): oeffnet OS-Terminal (cmd.exe),
+// keine Dependencies anderer Contribs, daher risikoarmes Disable.
+// import './contrib/externalTerminal/browser/externalTerminal.contribution.js';
 
 // Relauncher
 import './contrib/relauncher/browser/relauncher.contribution.js';
