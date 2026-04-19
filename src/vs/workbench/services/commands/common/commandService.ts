@@ -11,6 +11,13 @@ import { InstantiationType, registerSingleton } from '../../../../platform/insta
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
 import { IExtensionService } from '../../extensions/common/extensions.js';
+// Keel (D-033, Welle 12): Pre-Execute-Guard gegen Dev-Jargon-Commands.
+// Import aus `common/`, damit der Layer-Check ok ist — Implementation
+// liegt in `browser/` und wird per Side-Effect-Import im workbench.common.
+// main.ts-Bootstrap registriert. Der Lookup ist optional-tolerant (falls
+// der Service in einem Kontext nicht registriert ist, greift der Guard
+// nicht).
+import { IKeelCommandBlacklistService } from '../../../../keel/commandGuard/common/keelCommandGuard.js';
 
 export class CommandService extends Disposable implements ICommandService {
 
@@ -51,6 +58,18 @@ export class CommandService extends Disposable implements ICommandService {
 
 	async executeCommand<T>(id: string, ...args: unknown[]): Promise<T> {
 		this._logService.trace('CommandService#executeCommand', id);
+
+		// Keel (D-033, Welle 12): Command-Blacklist-Pre-Execute-Guard.
+		// Der Guard ist optional-tolerant: wenn der Keel-Service nicht
+		// registriert ist (z.B. in sessions-app-Kontexten oder in
+		// isolierten Tests), passiert nichts — der Flow faellt zurueck
+		// auf Upstream-Verhalten.
+		if (this._keelCommandGuardBlocks(id)) {
+			// Reject mit einem ruhigen Error, damit Aufrufer, die den
+			// Promise handlen, keinen harten Crash sehen; die UI-Meldung
+			// haelt der Blacklist-Service selbst hoch.
+			return Promise.reject(new Error(`command '${id}' is blocked by Keel`)) as Promise<T>;
+		}
 
 		const activationEvent = `onCommand:${id}`;
 		const commandIsRegistered = !!CommandsRegistry.getCommand(id);
@@ -107,6 +126,38 @@ export class CommandService extends Disposable implements ICommandService {
 	public override dispose(): void {
 		super.dispose();
 		this._starActivation?.cancel();
+	}
+
+	/**
+	 * Keel (D-033, Welle 12): Liefert `true`, wenn der uebergebene Command
+	 * vom `IKeelCommandBlacklistService` blockiert wird. Der Service wird
+	 * optional-tolerant ueber den `IInstantiationService` gelookt — falls
+	 * er nicht registriert ist, passiert nichts (Guard greift nicht).
+	 *
+	 * Bei Blockierung feuert der Service selbst den Otto-tauglichen Toast
+	 * ("Dieser Kurzbefehl ist in Keel nicht belegt.").
+	 */
+	private _keelCommandGuardBlocks(id: string): boolean {
+		try {
+			// `invokeFunction` ist der einzige sichere Weg, einen optionalen
+			// Service per Decorator zu erreichen. Fehler im Lookup (z.B.
+			// wenn der Service nicht registriert ist) werden vom umgebenden
+			// try/catch abgefangen.
+			let blocked = false;
+			this._instantiationService.invokeFunction(accessor => {
+				const guard = accessor.get(IKeelCommandBlacklistService);
+				if (guard.isAllowed(id)) {
+					return;
+				}
+				blocked = true;
+				guard.notifyBlocked(id);
+			});
+			return blocked;
+		} catch {
+			// Service nicht verfuegbar → Guard greift nicht, Upstream-Flow
+			// laeuft wie gehabt.
+			return false;
+		}
 	}
 }
 
