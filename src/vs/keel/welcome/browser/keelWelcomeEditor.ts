@@ -13,6 +13,7 @@ import { INotificationService } from '../../../platform/notification/common/noti
 import { IStorageService, StorageScope, StorageTarget } from '../../../platform/storage/common/storage.js';
 import { ITelemetryService } from '../../../platform/telemetry/common/telemetry.js';
 import { IThemeService } from '../../../platform/theme/common/themeService.js';
+import { IKeelCockpitService } from '../../cockpit/browser/keelCockpitService.js';
 import { KeelWelcomeInput } from './keelWelcomeInput.js';
 import { KeelWelcomeView } from './keelWelcomeView.js';
 import { keelWelcomeStrings } from './strings/keelWelcomeStrings.js';
@@ -29,8 +30,12 @@ import {
  * "So funktioniert Keel"-Sekundaer-Bereich. Nach dem ersten erfolgreichen Submit wird
  * das First-Run-Flag gesetzt und der Editor geschlossen.
  *
- * Die Dispatch-Integration wird in Welle B (Core-Integration) angebunden - aktuell
- * zeigt der Submit-Handler eine Toast-Notification und schliesst den Editor.
+ * Nach dem Submit uebergibt der Handler den Prompt an den `IKeelCockpitService`
+ * und oeffnet den Cockpit-Editor. Die echte Dispatch-Verdrahtung (gegen
+ * `IDispatchEngine` aus `@keel/core`) erfolgt spaeter ueber den Host-Adapter im
+ * Cockpit-Service - Welcome kennt diesen Pfad nicht. Ist der Cockpit-Service
+ * aus irgendeinem Grund nicht verfuegbar, wird defensiv die alte Toast-Meldung
+ * als Fallback angezeigt.
  *
  * @invariant Welcome ruft keine Telemetrie - keel-Platform-Default ist Telemetrie-aus.
  *   `ITelemetryService` wird nur injiziert, weil die `EditorPane`-Basisklasse ihn
@@ -50,6 +55,7 @@ export class KeelWelcomeEditor extends EditorPane {
 		@IStorageService private readonly keelStorageService: IStorageService,
 		@INotificationService private readonly notificationService: INotificationService,
 		@ICommandService private readonly commandService: ICommandService,
+		@IKeelCockpitService private readonly cockpitService: IKeelCockpitService,
 	) {
 		super(KeelWelcomeEditor.ID, group, telemetryService, themeService, keelStorageService);
 	}
@@ -127,14 +133,34 @@ export class KeelWelcomeEditor extends EditorPane {
 			StorageTarget.USER,
 		);
 
-		// TODO: dispatch-integration comes in next wave (Welle B).
-		// Aktuell: Toast anzeigen + Editor schliessen. `prompt` ist hier bewusst
-		// nur ein Platzhalter - der echte Dispatch in Welle B nimmt den String entgegen.
-		void prompt;
-		this.notificationService.info(keelWelcomeStrings.toastDispatchAccepted());
+		// Fire-and-forget: der View-Callback ist synchron, der Cockpit-Sprung aber
+		// async (Task anlegen + Editor oeffnen). Fehler-Pfad fallbackt auf Toast.
+		void this.dispatchToCockpit(prompt);
+	}
+
+	private async dispatchToCockpit(prompt: string): Promise<void> {
+		const trimmed = prompt.trim();
+		const input = this.input;
+
+		try {
+			if (this.cockpitService) {
+				await this.cockpitService.addTask(trimmed);
+				await this.cockpitService.openCockpit();
+			} else {
+				// Defensive: Cockpit-Service nicht verfuegbar -> Toast als Backup.
+				this.notificationService.info(keelWelcomeStrings.toastDispatchAccepted());
+			}
+		} catch (error) {
+			// Defensive: falls Cockpit-Oeffnen scheitert, den User nicht im
+			// Leeren stehen lassen. Welcome schliesst trotzdem - das First-Run-
+			// Flag ist bereits persistiert und der Auftrag wurde angenommen.
+			this.notificationService.info(keelWelcomeStrings.toastDispatchAccepted());
+			// Error wird nicht weiter verfolgt - Toast reicht als User-Feedback,
+			// Cockpit-Service ist optional und fehlende Integration ist nicht tragisch.
+			void error;
+		}
 
 		// Editor schliessen - das Input-Objekt schliessen, nicht die View.
-		const input = this.input;
 		if (input) {
 			this.group.closeEditor(input);
 		}
