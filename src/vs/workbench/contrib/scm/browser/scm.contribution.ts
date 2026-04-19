@@ -112,8 +112,10 @@ viewsRegistry.registerViews([{
 	canMoveView: true,
 	weight: 20,
 	order: 0,
-	when: ContextKeyExpr.and(ContextKeyExpr.has('scm.providerCount'), ContextKeyExpr.notEquals('scm.providerCount', 0)),
-	// readonly when = ContextKeyExpr.or(ContextKeyExpr.equals('config.scm.alwaysShowProviders', true), ContextKeyExpr.and(ContextKeyExpr.notEquals('scm.providerCount', 0), ContextKeyExpr.notEquals('scm.providerCount', 1)));
+	// Keel (D-010 / P-011): when:false versteckt SCM-Repositories-View. Services bleiben
+	// registriert fuer Chat/EditSessions/MultiDiff. ViewContainer verschwindet durch
+	// hideIfEmpty:true automatisch, wenn alle 3 SCM-Views hidden sind.
+	when: ContextKeyExpr.false(),
 	containerIcon: sourceControlViewIcon
 }], viewContainer);
 
@@ -127,6 +129,8 @@ viewsRegistry.registerViews([{
 	canMoveView: true,
 	weight: 40,
 	order: 1,
+	// Keel (D-010 / P-011): when:false versteckt SCM-Changes-View.
+	when: ContextKeyExpr.false(),
 	containerIcon: sourceControlViewIcon,
 	openCommandActionDescriptor: {
 		id: viewContainer.id,
@@ -151,10 +155,8 @@ viewsRegistry.registerViews([{
 	canMoveView: true,
 	weight: 40,
 	order: 2,
-	when: ContextKeyExpr.and(
-		ContextKeyExpr.has('scm.historyProviderCount'),
-		ContextKeyExpr.notEquals('scm.historyProviderCount', 0),
-	),
+	// Keel (D-010 / P-011): when:false versteckt SCM-Graph/History-View.
+	when: ContextKeyExpr.false(),
 	containerIcon: sourceControlViewIcon
 }], viewContainer);
 

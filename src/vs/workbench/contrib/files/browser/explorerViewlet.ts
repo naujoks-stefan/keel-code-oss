@@ -115,6 +115,11 @@ export class ExplorerViewletViewsContribution extends Disposable implements IWor
 			canMoveView: true,
 			collapsed: false,
 			hideByDefault: true,
+			// Keel (D-011 / P-012): when:false versteckt Explorer-"Open Editors" View.
+			// Alle 3 Explorer-Views (OpenEditors, Empty, Folders) werden versteckt —
+			// der Explorer-VIEW_CONTAINER auf Zeile 257 verschwindet dann automatisch
+			// durch hideIfEmpty:true.
+			when: ContextKeyExpr.false(),
 			focusCommand: {
 				id: 'workbench.files.action.focusOpenEditorsView',
 				keybindings: { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KeyK, KeyCode.KeyE) }
@@ -130,6 +135,8 @@ export class ExplorerViewletViewsContribution extends Disposable implements IWor
 			ctorDescriptor: new SyncDescriptor(EmptyView),
 			order: 1,
 			canToggleVisibility: true,
+			// Keel (D-011 / P-012): when:false versteckt Explorer-"Empty" View (wenn kein Workspace).
+			when: ContextKeyExpr.false(),
 			focusCommand: {
 				id: 'workbench.explorer.fileView.focus'
 			}
@@ -145,6 +152,8 @@ export class ExplorerViewletViewsContribution extends Disposable implements IWor
 			order: 1,
 			canMoveView: true,
 			canToggleVisibility: false,
+			// Keel (D-011 / P-012): when:false versteckt Explorer-"Folders" View.
+			when: ContextKeyExpr.false(),
 			focusCommand: {
 				id: 'workbench.explorer.fileView.focus'
 			}
