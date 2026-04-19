@@ -87,6 +87,38 @@
 	opacity: 0.85;
 }
 
+/* --- Lead-Intro-Block (Welle 12, D-029) ---
+ *
+ * Dezenter Hinweis-Kasten zwischen Subtitle und Eingabezeile. Verschwindet
+ * nach dem ersten Submit (Flag keel.welcome.leadIntroSeen). Typografie ist
+ * bewusst ruhig — Otto soll den Block als Orientierung lesen, nicht als
+ * Marketing-Banner wahrnehmen.
+ */
+
+.keel-welcome-lead-intro {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 12px 16px;
+	border-left: 3px solid var(--vscode-textLink-foreground, var(--vscode-focusBorder));
+	background-color: var(--vscode-textBlockQuote-background, rgba(128, 128, 128, 0.08));
+	border-radius: 4px;
+}
+
+.keel-welcome-lead-intro-line1 {
+	margin: 0;
+	font-size: 0.95rem;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.keel-welcome-lead-intro-line2 {
+	margin: 0;
+	font-size: 0.9rem;
+	line-height: 1.5;
+	opacity: 0.85;
+}
+
 /* --- Eingabezeile --- */
 
 .keel-welcome-prompt-wrapper {

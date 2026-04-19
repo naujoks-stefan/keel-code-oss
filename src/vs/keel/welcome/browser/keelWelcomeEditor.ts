@@ -19,6 +19,7 @@ import { KeelWelcomeView } from './keelWelcomeView.js';
 import { keelWelcomeStrings } from './strings/keelWelcomeStrings.js';
 import {
 	KEEL_WELCOME_EDITOR_ID,
+	KEEL_WELCOME_LEAD_INTRO_SEEN_STORAGE_KEY,
 	KEEL_WELCOME_SHOWN_STORAGE_KEY,
 } from '../common/keelWelcome.js';
 
@@ -105,11 +106,20 @@ export class KeelWelcomeEditor extends EditorPane {
 		clearNode(this.rootElement);
 
 		const autoFocusInput = input.initiator === 'startup';
+		// Welle-12 (D-029): Lead-Ref-Block nur zeigen, wenn der User noch nicht
+		// einmal submittet hat. Nach dem ersten Submit wird das Flag gesetzt
+		// und der Block erscheint nie wieder.
+		const leadIntroSeen = this.keelStorageService.getBoolean(
+			KEEL_WELCOME_LEAD_INTRO_SEEN_STORAGE_KEY,
+			StorageScope.APPLICATION,
+			false,
+		);
 		const view = new KeelWelcomeView(this.rootElement, {
 			onSubmit: prompt => this.handleSubmit(prompt),
 			onOpenRules: () => this.handleOpenRules(),
 		}, {
 			autoFocusInput,
+			showLeadIntro: !leadIntroSeen,
 		});
 
 		view.render();
@@ -128,6 +138,15 @@ export class KeelWelcomeEditor extends EditorPane {
 		// beim naechsten Start nicht mehr automatisch geoeffnet.
 		this.keelStorageService.store(
 			KEEL_WELCOME_SHOWN_STORAGE_KEY,
+			true,
+			StorageScope.APPLICATION,
+			StorageTarget.USER,
+		);
+
+		// Welle-12 (D-029): Lead-Intro-Flag setzen, damit der Block beim
+		// naechsten manuellen Oeffnen des Welcome nicht mehr erscheint.
+		this.keelStorageService.store(
+			KEEL_WELCOME_LEAD_INTRO_SEEN_STORAGE_KEY,
 			true,
 			StorageScope.APPLICATION,
 			StorageTarget.USER,
