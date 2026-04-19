@@ -13,10 +13,18 @@ import {
 	ConfigurationTarget,
 	IConfigurationService,
 } from '../../../platform/configuration/common/configuration.js';
+import { ICommandService } from '../../../platform/commands/common/commands.js';
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { IOpenerService } from '../../../platform/opener/common/opener.js';
 import { IProductService } from '../../../platform/product/common/productService.js';
 import { isMacintosh } from '../../../base/common/platform.js';
+import { IKeelAuthService } from '../../auth/browser/keelAuthService.js';
+import {
+	KEEL_AUTH_SIGN_IN_COMMAND_ID,
+	KEEL_AUTH_SIGN_OUT_COMMAND_ID,
+} from '../../auth/common/keelAuth.js';
+import { IKeelI18nService } from '../../i18n/browser/keelI18nService.js';
+import { KEEL_I18N_SWITCH_LANGUAGE_COMMAND_ID } from '../../i18n/browser/keelI18n.contribution.js';
 import { IKeelSettingsService } from './keelSettingsService.js';
 import { keelSettingsStrings } from './strings/keelSettingsStrings.js';
 import {
@@ -66,12 +74,29 @@ export class KeelSettingsFlyout extends Disposable {
 		@IConfigurationService private readonly configurationService: IConfigurationService,
 		@IOpenerService private readonly openerService: IOpenerService,
 		@IProductService private readonly productService: IProductService,
+		@IKeelAuthService private readonly authService: IKeelAuthService,
+		@ICommandService private readonly commandService: ICommandService,
+		@IKeelI18nService private readonly i18nService: IKeelI18nService,
 	) {
 		super();
 		// Instantiation-Service wird im Moment nicht direkt benoetigt, aber fuer
 		// zukuenftige Item-Erweiterungen (z.B. Sub-Panels via Child-Services)
 		// halten wir die Injection explizit.
 		void this.instantiationService;
+
+		// Auf Auth-State-Aenderung reagieren, damit der Assistant-Item im
+		// Flyout aktualisiert wird, wenn der User sich an- oder abmeldet
+		// (auch wenn der Trigger nicht im Flyout selbst war).
+		this._register(this.authService.onDidChangeAuthState(() => {
+			if (this.visible) {
+				this.renderBody();
+			}
+		}));
+
+		// I18n-Switch erzwingt einen Reload (siehe keelI18n.contribution.ts).
+		// Wir brauchen hier nichts zu machen — der `keepLanguageInSync`-Call
+		// im i18n-Service-Konstruktor ist der einzige State-Leser.
+		void this.i18nService;
 	}
 
 	/**
@@ -90,7 +115,10 @@ export class KeelSettingsFlyout extends Disposable {
 		// Initialisierung (Read aus ~/Keel/config/settings.json) einmalig und
 		// gecached — wiederholtes Oeffnen wartet auf die eine Initialisierung.
 		if (!this.initializedPromise) {
-			this.initializedPromise = this.settingsService.initialize();
+			this.initializedPromise = Promise.all([
+				this.settingsService.initialize(),
+				this.authService.initialize(),
+			]).then(() => undefined);
 		}
 		await this.initializedPromise;
 
@@ -251,16 +279,23 @@ export class KeelSettingsFlyout extends Disposable {
 		const optDe = append(select, $<HTMLOptionElement>('option', { value: 'de' }, keelSettingsStrings.languageGerman()));
 		optDe.selected = current === 'de';
 
-		const optEn = append(select, $<HTMLOptionElement>('option', { value: 'en' }, keelSettingsStrings.languageEnglishComingSoon()));
-		// Welle 11: en ist Dropdown-disabled, damit Otto die kommende Sprache
-		// sieht, ohne Frust durch Verstecken. Final-decision Abschnitt 2.
-		optEn.disabled = true;
+		// Welle 12 (D-030): Englisch ist jetzt aktiv. Disabled-Flag wird
+		// entfernt, Option-Label wechselt auf "Englisch" (ohne
+		// "Verfuegbar ab Welle 12"-Suffix).
+		const optEn = append(select, $<HTMLOptionElement>('option', { value: 'en' }, keelSettingsStrings.languageEnglish()));
 		optEn.selected = current === 'en';
 
 		this.viewDisposables.add(addDisposableListener(select, EventType.CHANGE, () => {
 			const value = select.value === 'en' ? 'en' : 'de';
-			void this.settingsService.setLanguage(value);
-			// Neustart-Hinweis inline einblenden
+			// Welle 12 (D-030): Sprache-Switch laeuft ueber den Command
+			// `keel.i18n.switchLanguage`, der bei laufenden Auftraegen
+			// einen Confirm-Dialog zeigt und danach `IHostService.reload()`
+			// triggert. Die reine `setLanguage()`-Persistenz erledigt der
+			// Command mit; wir rufen ihn hier direkt mit dem Target auf.
+			void this.commandService.executeCommand(KEEL_I18N_SWITCH_LANGUAGE_COMMAND_ID, value);
+			// Optischer Hinweis — falls der Reload aus irgendeinem Grund
+			// nicht greift, sieht Otto immerhin, dass die Aenderung einen
+			// Neustart erfordert.
 			this.ensureInlineHint(item, 'language', keelSettingsStrings.languageRestartHint());
 		}));
 	}
@@ -354,18 +389,44 @@ export class KeelSettingsFlyout extends Disposable {
 	}
 
 	private renderAssistantItem(parent: HTMLElement): void {
-		// Welle 11: Status ist generisch "Nicht angemeldet", Buttons sind
-		// disabled mit "Verfuegbar in Kuerze"-Tooltip. Details in final-
-		// decisions Abschnitt Item 6.
+		// Welle 12 (D-032): Aktiver Reauth-Flow. Buttons sind nicht mehr
+		// disabled; je nach Auth-State rendern wir [Anmelden] oder
+		// [Abmelden]. Ein Reauth-Banner zeigt nicht-angemeldeten Zustand
+		// als Otto-verstaendlichen Hinweis.
 		const item = this.appendItem(parent, 'assistant', keelSettingsStrings.assistantLabel(), '');
+
+		const state = this.authService.getAuthState();
+		if (state.signedIn) {
+			this.replaceItemDescription(item, keelSettingsStrings.assistantStatusConnected(state.accountLabel ?? 'Claude-Account'));
+
+			const signOutBtn = append(item, $<HTMLButtonElement>('button.keel-settings-button', {
+				type: 'button',
+				'aria-label': keelSettingsStrings.assistantSignOut(),
+			}, keelSettingsStrings.assistantSignOut()));
+
+			this.viewDisposables.add(addDisposableListener(signOutBtn, EventType.CLICK, () => {
+				void this.commandService.executeCommand(KEEL_AUTH_SIGN_OUT_COMMAND_ID);
+			}));
+			return;
+		}
+
+		// Nicht angemeldet: Status-Zeile + Reauth-Banner + [Anmelden]-Button.
 		this.replaceItemDescription(item, keelSettingsStrings.assistantStatusNotConnected());
 
-		const btn = append(item, $<HTMLButtonElement>('button.keel-settings-button', {
+		const banner = append(item, $<HTMLDivElement>('div.keel-settings-reauth-banner', {
+			role: 'note',
+		}));
+		append(banner, $<HTMLSpanElement>('span.keel-settings-reauth-icon.codicon.codicon-warning', { 'aria-hidden': 'true' }));
+		append(banner, $<HTMLSpanElement>('span.keel-settings-reauth-text', {}, keelSettingsStrings.assistantReauthBanner()));
+
+		const signInBtn = append(item, $<HTMLButtonElement>('button.keel-settings-button', {
 			type: 'button',
-			title: keelSettingsStrings.assistantComingSoon(),
 			'aria-label': keelSettingsStrings.assistantSignIn(),
 		}, keelSettingsStrings.assistantSignIn()));
-		btn.disabled = true;
+
+		this.viewDisposables.add(addDisposableListener(signInBtn, EventType.CLICK, () => {
+			void this.commandService.executeCommand(KEEL_AUTH_SIGN_IN_COMMAND_ID);
+		}));
 	}
 
 	private renderAboutItem(parent: HTMLElement): void {

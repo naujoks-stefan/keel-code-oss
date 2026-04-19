@@ -415,6 +415,23 @@ import '../keel/settings/browser/keelSettings.contribution.js';
 // `keel.platform.retryStart`.
 import '../keel/help/browser/keelHelp.contribution.js';
 
+// Keel i18n (Welle 12, D-030) — Sprache-Switch mit Reload-Window-Confirm.
+// Side-Effect-Import registriert `IKeelI18nService` als Singleton und die
+// `keel.i18n.switchLanguage`-Action. Der Bootstrap-Contribution haengt den
+// globalen Language-Getter fuer `keelPickLanguage(de, en)` an.
+import '../keel/i18n/browser/keelI18n.contribution.js';
+
+// Keel Auth (Welle 12, D-032) — Claude-Reauth-Flow. Side-Effect-Import
+// registriert `IKeelAuthService` als Singleton und die Commands
+// `keel.auth.signIn` + `keel.auth.signOut`.
+import '../keel/auth/browser/keelAuth.contribution.js';
+
+// Keel Command-Guard (Welle 12, D-033) — Pre-Execute-Blacklist gegen
+// Dev-Jargon-Commands. Side-Effect-Import registriert
+// `IKeelCommandBlacklistService` als Singleton. Der Guard wird vom
+// Upstream-CommandService per optional-tolerantem Lookup aufgerufen.
+import '../keel/commandGuard/browser/keelCommandGuard.contribution.js';
+
 // Welcome Onboarding
 import './contrib/welcomeOnboarding/browser/welcomeOnboarding.contribution.js';
 

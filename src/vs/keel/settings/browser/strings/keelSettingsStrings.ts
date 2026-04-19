@@ -47,6 +47,11 @@ export const keelSettingsStrings = {
 	languageEnglishComingSoon: (): string =>
 		// allow-any-unicode-next-line
 		localize('keel.settings.language.englishComingSoon', "Englisch (Verfuegbar ab Welle 12)"),
+	// Welle 12 (D-030): Aktivierter Englisch-Eintrag (ohne "Coming Soon"-
+	// Suffix). Der alte `languageEnglishComingSoon`-Getter bleibt fuer
+	// eventuelle Rueckkompat-Zugriffe erhalten, wird aber nicht mehr genutzt.
+	languageEnglish: (): string =>
+		localize('keel.settings.language.english', "Englisch"),
 	languageRestartHint: (): string =>
 		// allow-any-unicode-next-line
 		localize('keel.settings.language.restartHint', "Sprachaenderung greift beim naechsten Start."),
@@ -115,6 +120,14 @@ export const keelSettingsStrings = {
 	assistantComingSoon: (): string =>
 		// allow-any-unicode-next-line
 		localize('keel.settings.assistant.comingSoon', "Verfuegbar in Kuerze"),
+	/**
+	 * Welle 12 (D-032): Reauth-Banner-Text, wenn Otto nicht angemeldet ist
+	 * (oder der Token expired ist). Wird im Assistant-Item als dezenter
+	 * Warn-Hinweis angezeigt.
+	 */
+	assistantReauthBanner: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.settings.assistant.reauthBanner', "Melde dich bitte neu an, damit dein Assistent weiterarbeiten kann."),
 
 	// --- Item 7: Ueber Keel ---
 	aboutLabel: (): string =>
