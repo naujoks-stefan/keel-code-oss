@@ -385,6 +385,10 @@ import './contrib/welcomeViews/common/newFile.contribution.js';
 // Keel Welcome (D-014) — Otto-UX-Welcome, ersetzt Standard-Welcome funktional.
 import '../keel/welcome/browser/keelWelcome.contribution.js';
 
+// Keel Cockpit — Otto-UX-Cockpit, zentrale Orchestrations-Flaeche nach Welcome-Submit.
+// Adaptives Karten-Grid (0/1/2/3/4/5+) mit Plan-Review-Sheet als USP-Moment.
+import '../keel/cockpit/browser/keelCockpit.contribution.js';
+
 // Keel Chat-Stub (D-015) — No-Op-Stubs fuer IChatAgentService / ILanguageModelsService /
 // IAgentNetworkFilterService. Behebt 23 Contribution-Boot-Errors, die durch die Chat-
 // Deaktivierung (D-013) in externen Consumern (Notebook, InlineChat, browserView, Tasks)

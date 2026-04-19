@@ -1,0 +1,874 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/* --- Wurzel --- */
+
+.keel-cockpit-root {
+	width: 100%;
+	height: 100%;
+	overflow-y: auto;
+	background-color: var(--vscode-editor-background);
+	color: var(--vscode-foreground);
+	font-family: var(--vscode-font-family);
+	font-size: var(--vscode-font-size);
+	position: relative;
+
+	/* Scrollbar-Farben an VSCode-Theme koppeln. */
+	scrollbar-width: thin;
+	scrollbar-color: var(--vscode-scrollbarSlider-background) transparent;
+}
+
+.keel-cockpit-root::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+.keel-cockpit-root::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.keel-cockpit-root::-webkit-scrollbar-thumb {
+	background: var(--vscode-scrollbarSlider-background);
+	border-radius: 0;
+}
+
+.keel-cockpit-root::-webkit-scrollbar-thumb:hover {
+	background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+.keel-cockpit-root::-webkit-scrollbar-thumb:active {
+	background: var(--vscode-scrollbarSlider-activeBackground);
+}
+
+.keel-cockpit-root::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
+.keel-cockpit-container {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-height: 100%;
+	max-width: 1440px;
+	margin: 0 auto;
+	box-sizing: border-box;
+}
+
+/* --- Header --- */
+
+.keel-cockpit-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px 32px;
+	border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(127, 127, 127, 0.3));
+	gap: 16px;
+}
+
+.keel-cockpit-header-left {
+	display: flex;
+	align-items: baseline;
+	gap: 12px;
+}
+
+.keel-cockpit-header-logo {
+	font-size: 1rem;
+	font-weight: 700;
+	opacity: 0.6;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.keel-cockpit-header-title {
+	font-size: 1.25rem;
+	font-weight: 600;
+	margin: 0;
+}
+
+.keel-cockpit-header-right {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+/* QueueIndicator */
+.keel-cockpit-queue-badge {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	background-color: var(--vscode-editorWidget-background, rgba(127, 127, 127, 0.08));
+	border: 1px solid var(--vscode-editorWidget-border, transparent);
+	border-radius: 12px;
+	font-size: 0.85rem;
+	opacity: 0.85;
+}
+
+.keel-cockpit-queue-icon.codicon {
+	font-size: 13px;
+	line-height: 1;
+}
+
+/* Neuer-Auftrag-Button */
+.keel-cockpit-new-task-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 16px;
+	background-color: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	border: 1px solid transparent;
+	border-radius: 6px;
+	font-family: inherit;
+	font-size: 0.95rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 120ms ease;
+}
+
+.keel-cockpit-new-task-btn:hover {
+	background-color: var(--vscode-button-hoverBackground);
+}
+
+.keel-cockpit-new-task-btn:focus-visible {
+	outline: 2px solid var(--vscode-focusBorder);
+	outline-offset: 2px;
+}
+
+.keel-cockpit-new-task-icon.codicon {
+	font-size: 14px;
+	line-height: 1;
+}
+
+/* --- Body --- */
+
+.keel-cockpit-body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	padding: 32px;
+	box-sizing: border-box;
+}
+
+/* --- Empty-State --- */
+
+.keel-cockpit-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	margin: auto;
+	padding: 48px 24px;
+	max-width: 480px;
+	text-align: center;
+}
+
+.keel-cockpit-empty-icon.codicon {
+	font-size: 56px;
+	opacity: 0.4;
+	margin-bottom: 8px;
+	color: var(--vscode-foreground);
+}
+
+.keel-cockpit-empty-title {
+	margin: 0;
+	font-size: 1.4rem;
+	font-weight: 600;
+}
+
+.keel-cockpit-empty-subtitle {
+	margin: 0 0 12px 0;
+	font-size: 1rem;
+	opacity: 0.8;
+}
+
+.keel-cockpit-empty-cta {
+	padding: 10px 20px;
+	font-size: 1rem;
+}
+
+/* --- Grid-Layout (adaptiv) --- */
+
+.keel-cockpit-grid {
+	display: grid;
+	gap: 20px;
+	width: 100%;
+}
+
+/* 1 Task: zentriert, 70% (max. 900px). */
+.keel-cockpit-grid-1 {
+	grid-template-columns: minmax(0, 900px);
+	justify-content: center;
+	width: 70%;
+	max-width: 900px;
+	margin: 0 auto;
+}
+
+/* 2 Tasks: 1x2 Split */
+.keel-cockpit-grid-2 {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* 3 Tasks: 2+1 - zwei obere, eine untere zentriert */
+.keel-cockpit-grid-3 {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.keel-cockpit-grid-3 > .keel-cockpit-card:nth-child(3) {
+	grid-column: 1 / -1;
+	justify-self: center;
+	width: calc(50% - 10px);
+}
+
+/* 4 Tasks: 2x2 Grid */
+.keel-cockpit-grid-4 {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+	.keel-cockpit-grid-2,
+	.keel-cockpit-grid-3,
+	.keel-cockpit-grid-4 {
+		grid-template-columns: 1fr;
+	}
+	.keel-cockpit-grid-3 > .keel-cockpit-card:nth-child(3) {
+		width: 100%;
+	}
+	.keel-cockpit-grid-1 {
+		width: 100%;
+	}
+}
+
+/* --- TaskCard --- */
+
+.keel-cockpit-card {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 18px 20px;
+	background-color: var(--vscode-editorWidget-background, rgba(127, 127, 127, 0.08));
+	border: 1px solid var(--vscode-editorWidget-border, transparent);
+	border-radius: 12px;
+	/*
+	 * Transform + Schatten hier default none - wird fuer waiting-for-review
+	 * ueberschrieben (Scale-Lift, Marketing-Must USP-Moment).
+	 */
+	transform: scale(1);
+	box-shadow: none;
+	transition:
+		transform 220ms ease,
+		box-shadow 220ms ease,
+		border-color 220ms ease;
+}
+
+/* USP-Moment: waiting-for-review Karte wird groesser und wirft Schatten. */
+.keel-cockpit-card-waiting-for-review {
+	transform: scale(1.05);
+	border-color: var(
+		--vscode-inputValidation-warningBorder,
+		var(--vscode-editorWarning-foreground, #d18616)
+	);
+	border-width: 2px;
+	padding: 17px 19px; /* kompensiert die +1px Border */
+	box-shadow:
+		0 10px 28px rgba(0, 0, 0, 0.28),
+		0 4px 10px rgba(0, 0, 0, 0.18);
+	z-index: 1;
+	position: relative;
+}
+
+/* Completed-Akzent - dezenter gruener Rand */
+.keel-cockpit-card-completed {
+	border-color: var(--vscode-charts-green, rgba(100, 180, 100, 0.5));
+}
+
+/* Failed-Akzent - dezenter roter Rand */
+.keel-cockpit-card-failed {
+	border-color: var(--vscode-inputValidation-errorBorder, rgba(200, 100, 100, 0.6));
+}
+
+/* Paused-Akzent - grauer Rand */
+.keel-cockpit-card-paused {
+	border-color: var(--vscode-descriptionForeground, rgba(127, 127, 127, 0.4));
+}
+
+/* Card-Header */
+.keel-cockpit-card-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.keel-cockpit-card-icon.codicon {
+	font-size: 22px;
+	line-height: 1;
+	color: var(--vscode-foreground);
+	flex-shrink: 0;
+}
+
+.keel-cockpit-card-title {
+	flex: 1;
+	margin: 0;
+	font-size: 1.05rem;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.keel-cockpit-card-header-actions {
+	display: flex;
+	gap: 2px;
+	flex-shrink: 0;
+}
+
+.keel-cockpit-card-iconbtn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	background: transparent;
+	color: inherit;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	opacity: 0.7;
+	transition: opacity 120ms ease, background-color 120ms ease;
+}
+
+.keel-cockpit-card-iconbtn:hover:not([disabled]) {
+	background-color: var(--vscode-toolbar-hoverBackground, rgba(127, 127, 127, 0.12));
+	opacity: 1;
+}
+
+.keel-cockpit-card-iconbtn[disabled] {
+	cursor: not-allowed;
+	opacity: 0.35;
+}
+
+.keel-cockpit-card-iconbtn:focus-visible {
+	outline: 2px solid var(--vscode-focusBorder);
+	outline-offset: 1px;
+}
+
+.keel-cockpit-card-iconbtn .codicon {
+	font-size: 14px;
+	line-height: 1;
+}
+
+/* Card-Body */
+.keel-cockpit-card-body {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.keel-cockpit-card-phase-counter {
+	font-size: 0.8rem;
+	opacity: 0.7;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.keel-cockpit-card-phase-label {
+	font-size: 1.1rem;
+	font-weight: 500;
+}
+
+.keel-cockpit-card-completed-title {
+	margin: 0;
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--vscode-charts-green, var(--vscode-foreground));
+}
+
+.keel-cockpit-card-failed-title {
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--vscode-inputValidation-errorForeground, var(--vscode-foreground));
+}
+
+.keel-cockpit-card-paused-title {
+	font-size: 1rem;
+	font-weight: 600;
+	opacity: 0.7;
+}
+
+/* Progress-Bar */
+.keel-cockpit-card-progress {
+	width: 100%;
+	height: 3px;
+	background-color: var(--vscode-editorWidget-border, rgba(127, 127, 127, 0.2));
+	border-radius: 2px;
+	overflow: hidden;
+	position: relative;
+}
+
+.keel-cockpit-card-progress-bar {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 40%;
+	background-color: var(--vscode-progressBar-background, var(--vscode-foreground));
+	border-radius: 2px;
+	animation: keel-cockpit-progress-indeterminate 1800ms linear infinite;
+}
+
+@keyframes keel-cockpit-progress-indeterminate {
+	0%   { left: -40%; }
+	100% { left: 100%; }
+}
+
+.keel-cockpit-card-hint {
+	font-size: 0.9rem;
+	line-height: 1.5;
+	color: var(--vscode-descriptionForeground, var(--vscode-foreground));
+}
+
+.keel-cockpit-card-output {
+	margin: 0;
+	padding: 8px 10px;
+	background-color: rgba(127, 127, 127, 0.08);
+	border-radius: 6px;
+	font-family: inherit;
+	font-size: 0.85rem;
+	line-height: 1.5;
+	opacity: 0.9;
+	white-space: pre-wrap;
+	max-height: 72px;
+	overflow: hidden;
+	color: var(--vscode-descriptionForeground, var(--vscode-foreground));
+}
+
+.keel-cockpit-card-progress-text {
+	font-size: 0.88rem;
+	opacity: 0.8;
+}
+
+.keel-cockpit-card-summary {
+	margin: 0;
+	font-size: 0.95rem;
+	line-height: 1.5;
+}
+
+.keel-cockpit-card-artifact {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 10px;
+	background-color: rgba(127, 127, 127, 0.08);
+	border-radius: 6px;
+	font-size: 0.9rem;
+}
+
+.keel-cockpit-card-artifact-icon.codicon {
+	font-size: 16px;
+	line-height: 1;
+}
+
+.keel-cockpit-card-artifact-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.keel-cockpit-card-artifact-size {
+	opacity: 0.65;
+	font-size: 0.85rem;
+}
+
+/* Card-CTA (Phase 3) */
+.keel-cockpit-card-cta {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 10px 18px;
+	background-color: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	border: none;
+	border-radius: 6px;
+	font-family: inherit;
+	font-size: 1rem;
+	font-weight: 600;
+	cursor: pointer;
+	align-self: flex-start;
+	transition: background-color 120ms ease;
+}
+
+.keel-cockpit-card-cta:hover {
+	background-color: var(--vscode-button-hoverBackground);
+}
+
+.keel-cockpit-card-cta:focus-visible {
+	outline: 2px solid var(--vscode-focusBorder);
+	outline-offset: 2px;
+}
+
+.keel-cockpit-card-cta .codicon {
+	font-size: 14px;
+	line-height: 1;
+}
+
+/* Card-Footer */
+.keel-cockpit-card-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	padding-top: 8px;
+	border-top: 1px solid var(--vscode-editorWidget-border, rgba(127, 127, 127, 0.15));
+}
+
+.keel-cockpit-card-time {
+	font-size: 0.8rem;
+	opacity: 0.65;
+}
+
+.keel-cockpit-card-footer-actions {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+
+.keel-cockpit-card-footer-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 5px 10px;
+	background: transparent;
+	color: inherit;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	font-family: inherit;
+	font-size: 0.85rem;
+	cursor: pointer;
+	opacity: 0.85;
+	transition: background-color 120ms ease, opacity 120ms ease;
+}
+
+.keel-cockpit-card-footer-btn:hover {
+	background-color: var(--vscode-toolbar-hoverBackground, rgba(127, 127, 127, 0.12));
+	opacity: 1;
+}
+
+.keel-cockpit-card-footer-btn:focus-visible {
+	outline: 2px solid var(--vscode-focusBorder);
+	outline-offset: 1px;
+}
+
+.keel-cockpit-card-footer-btn .codicon {
+	font-size: 12px;
+	line-height: 1;
+}
+
+.keel-cockpit-card-footer-btn-primary {
+	background-color: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	opacity: 1;
+}
+
+.keel-cockpit-card-footer-btn-primary:hover {
+	background-color: var(--vscode-button-hoverBackground);
+}
+
+.keel-cockpit-card-footer-btn-danger {
+	color: var(--vscode-inputValidation-errorForeground, inherit);
+}
+
+/* Icon-Animationen fuer laufende Phasen */
+@keyframes keel-cockpit-spin {
+	from { transform: rotate(0deg); }
+	to   { transform: rotate(360deg); }
+}
+
+@keyframes keel-cockpit-pulse {
+	0%, 100% { opacity: 0.5; }
+	50%      { opacity: 1; }
+}
+
+.keel-cockpit-card-icon-spinning {
+	animation: keel-cockpit-spin 3s linear infinite;
+	transform-origin: center center;
+	display: inline-block;
+}
+
+.keel-cockpit-card-icon-pulsing {
+	animation: keel-cockpit-pulse 1600ms ease-in-out infinite;
+	display: inline-block;
+}
+
+/* --- Overlay + Sheet (PlanReview + NewTask) --- */
+
+.keel-cockpit-overlay {
+	position: absolute;
+	inset: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	z-index: 100;
+	box-sizing: border-box;
+}
+
+.keel-cockpit-overlay-new-task {
+	align-items: flex-start;
+	padding-top: 80px;
+}
+
+.keel-cockpit-sheet {
+	position: relative;
+	width: 100%;
+	max-width: 720px;
+	max-height: calc(100% - 48px);
+	overflow-y: auto;
+	background-color: var(--vscode-editor-background);
+	border: 1px solid var(--vscode-editorWidget-border, transparent);
+	border-radius: 12px;
+	padding: 28px 32px;
+	box-shadow:
+		0 16px 48px rgba(0, 0, 0, 0.38),
+		0 6px 16px rgba(0, 0, 0, 0.22);
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	box-sizing: border-box;
+
+	scrollbar-width: thin;
+	scrollbar-color: var(--vscode-scrollbarSlider-background) transparent;
+}
+
+.keel-cockpit-sheet::-webkit-scrollbar {
+	width: 10px;
+}
+
+.keel-cockpit-sheet::-webkit-scrollbar-thumb {
+	background: var(--vscode-scrollbarSlider-background);
+}
+
+.keel-cockpit-sheet::-webkit-scrollbar-thumb:hover {
+	background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+.keel-cockpit-sheet-new-task {
+	max-width: 560px;
+	padding: 20px 24px;
+	gap: 12px;
+}
+
+.keel-cockpit-sheet-close {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	width: 28px;
+	height: 28px;
+	background: transparent;
+	color: inherit;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	opacity: 0.7;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.keel-cockpit-sheet-close:hover {
+	opacity: 1;
+	background-color: var(--vscode-toolbar-hoverBackground, rgba(127, 127, 127, 0.12));
+}
+
+.keel-cockpit-sheet-close:focus-visible {
+	outline: 2px solid var(--vscode-focusBorder);
+	outline-offset: 1px;
+}
+
+.keel-cockpit-sheet-close .codicon {
+	font-size: 14px;
+}
+
+.keel-cockpit-sheet-label {
+	font-size: 0.95rem;
+	font-weight: 500;
+}
+
+.keel-cockpit-sheet-textarea {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 12px 14px;
+	font-family: inherit;
+	font-size: 1rem;
+	line-height: 1.5;
+	color: var(--vscode-input-foreground);
+	background-color: var(--vscode-input-background);
+	border: 1px solid var(--vscode-input-border, transparent);
+	border-radius: 8px;
+	resize: vertical;
+}
+
+.keel-cockpit-sheet-textarea:focus {
+	outline: none;
+	border-color: var(--vscode-focusBorder);
+	box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+}
+
+.keel-cockpit-sheet-button-row {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+	flex-wrap: wrap;
+}
+
+.keel-cockpit-btn {
+	padding: 8px 16px;
+	font-family: inherit;
+	font-size: 0.95rem;
+	font-weight: 500;
+	border: 1px solid transparent;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: background-color 120ms ease;
+}
+
+.keel-cockpit-btn:focus-visible {
+	outline: 2px solid var(--vscode-focusBorder);
+	outline-offset: 2px;
+}
+
+.keel-cockpit-btn-primary {
+	background-color: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+}
+
+.keel-cockpit-btn-primary:hover {
+	background-color: var(--vscode-button-hoverBackground);
+}
+
+.keel-cockpit-btn-secondary {
+	background-color: var(
+		--vscode-button-secondaryBackground,
+		var(--vscode-editorWidget-background)
+	);
+	color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+	border-color: var(--vscode-editorWidget-border, transparent);
+}
+
+.keel-cockpit-btn-secondary:hover {
+	background-color: var(
+		--vscode-button-secondaryHoverBackground,
+		var(--vscode-toolbar-hoverBackground, rgba(127, 127, 127, 0.18))
+	);
+}
+
+.keel-cockpit-btn-tertiary {
+	background: transparent;
+	color: var(--vscode-foreground);
+	opacity: 0.75;
+}
+
+.keel-cockpit-btn-tertiary:hover {
+	opacity: 1;
+	background-color: var(--vscode-toolbar-hoverBackground, rgba(127, 127, 127, 0.12));
+}
+
+.keel-cockpit-btn-danger-tertiary {
+	background: transparent;
+	color: var(--vscode-inputValidation-errorForeground, var(--vscode-foreground));
+	opacity: 0.85;
+}
+
+.keel-cockpit-btn-danger-tertiary:hover {
+	opacity: 1;
+	background-color: var(--vscode-inputValidation-errorBackground, rgba(200, 100, 100, 0.12));
+}
+
+/* PlanReviewSheet */
+.keel-cockpit-review-title {
+	margin: 0 0 8px 0;
+	font-size: 1.4rem;
+	font-weight: 600;
+}
+
+.keel-cockpit-review-section {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.keel-cockpit-review-section-label {
+	font-size: 0.85rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	opacity: 0.75;
+}
+
+.keel-cockpit-review-section-body {
+	margin: 0;
+	font-size: 1rem;
+	line-height: 1.55;
+}
+
+.keel-cockpit-review-steps,
+.keel-cockpit-review-hints {
+	margin: 0;
+	padding-left: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	font-size: 1rem;
+	line-height: 1.55;
+}
+
+.keel-cockpit-review-divider {
+	height: 1px;
+	background-color: var(--vscode-editorWidget-border, rgba(127, 127, 127, 0.25));
+	margin: 8px 0;
+}
+
+.keel-cockpit-review-revision {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* --- prefers-reduced-motion --- */
+
+@media (prefers-reduced-motion: reduce) {
+	.keel-cockpit-card,
+	.keel-cockpit-new-task-btn,
+	.keel-cockpit-card-cta,
+	.keel-cockpit-card-footer-btn,
+	.keel-cockpit-card-iconbtn,
+	.keel-cockpit-btn,
+	.keel-cockpit-sheet-close {
+		transition: none;
+	}
+
+	/*
+	 * Reduzierte Motion: Scale-Lift der waiting-for-review Karte abschalten
+	 * (Marketing-Must: "mit prefers-reduced-motion abschalten"). Die Karte
+	 * bleibt visuell unterscheidbar via Rand-Farbe + -Breite.
+	 */
+	.keel-cockpit-card-waiting-for-review {
+		transform: none;
+		box-shadow: none;
+	}
+
+	.keel-cockpit-card-progress-bar {
+		animation: none;
+		width: 30%;
+	}
+
+	.keel-cockpit-card-icon-spinning,
+	.keel-cockpit-card-icon-pulsing {
+		animation: none;
+	}
+}
