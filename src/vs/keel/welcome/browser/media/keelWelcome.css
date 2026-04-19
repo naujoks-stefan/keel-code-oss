@@ -12,6 +12,38 @@
 	color: var(--vscode-foreground);
 	font-family: var(--vscode-font-family);
 	font-size: var(--vscode-font-size);
+
+	/* Scrollbar-Farben an VSCode-Theme koppeln. */
+	/* Firefox: scrollbar-width + scrollbar-color. */
+	/* Webkit/Electron: pseudo-selectors weiter unten. */
+	scrollbar-width: thin;
+	scrollbar-color: var(--vscode-scrollbarSlider-background) transparent;
+}
+
+.keel-welcome-root::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+.keel-welcome-root::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.keel-welcome-root::-webkit-scrollbar-thumb {
+	background: var(--vscode-scrollbarSlider-background);
+	border-radius: 0;
+}
+
+.keel-welcome-root::-webkit-scrollbar-thumb:hover {
+	background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+.keel-welcome-root::-webkit-scrollbar-thumb:active {
+	background: var(--vscode-scrollbarSlider-activeBackground);
+}
+
+.keel-welcome-root::-webkit-scrollbar-corner {
+	background: transparent;
 }
 
 /* Aeusserer Container - setzt die region-Semantik. */

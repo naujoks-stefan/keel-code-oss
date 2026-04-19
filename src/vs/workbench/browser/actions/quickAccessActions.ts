@@ -3,21 +3,21 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { localize, localize2 } from '../../../nls.js';
-import { MenuId, Action2, registerAction2 } from '../../../platform/actions/common/actions.js';
+import { localize2 } from '../../../nls.js';
+import { Action2, registerAction2 } from '../../../platform/actions/common/actions.js';
 import { KeyMod, KeyCode } from '../../../base/common/keyCodes.js';
 import { KeybindingsRegistry, KeybindingWeight, IKeybindingRule } from '../../../platform/keybinding/common/keybindingsRegistry.js';
 import { IQuickInputService, ItemActivation, QuickInputHideReason } from '../../../platform/quickinput/common/quickInput.js';
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
-import { CommandsRegistry, ICommandService } from '../../../platform/commands/common/commands.js';
-import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
+import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
 import { ServicesAccessor } from '../../../platform/instantiation/common/instantiation.js';
 import { inQuickPickContext, defaultQuickAccessContext, getQuickNavigateHandler } from '../quickaccess.js';
 import { ILocalizedString } from '../../../platform/action/common/action.js';
-import { AnythingQuickAccessProviderRunOptions } from '../../../platform/quickinput/common/quickAccess.js';
-import { Codicon } from '../../../base/common/codicons.js';
-
-const UNIFIED_AGENTS_BAR_SETTING = 'chat.unifiedAgentsBar.enabled';
+// DISABLED by Keel (D-017): Imports MenuId, ICommandService, IConfigurationService,
+// AnythingQuickAccessProviderRunOptions, Codicon, localize und UNIFIED_AGENTS_BAR_SETTING
+// entfernt, weil die Action2 `workbench.action.quickOpen` und
+// `workbench.action.quickOpenWithModes` komplett auskommentiert sind (siehe unten).
+// Bei Upstream-Merge: wenn eine der Actions reaktiviert wird, die Imports wieder ergaenzen.
 
 //#region Quick access management commands and keys
 
@@ -121,77 +121,84 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 	}
 });
 
-registerAction2(class QuickAccessAction extends Action2 {
-	constructor() {
-		super({
-			id: 'workbench.action.quickOpen',
-			title: localize2('quickOpen', "Go to File..."),
-			metadata: {
-				description: `Quick access`,
-				args: [{
-					name: 'prefix',
-					schema: {
-						'type': 'string'
-					}
-				}]
-			},
-			keybinding: {
-				weight: KeybindingWeight.WorkbenchContrib,
-				primary: globalQuickAccessKeybinding.primary,
-				secondary: globalQuickAccessKeybinding.secondary,
-				mac: globalQuickAccessKeybinding.mac
-			},
-			f1: true
-		});
-	}
+// DISABLED by Keel (D-017): Quick-Open (Ctrl+P) ist fuer Otto nicht zugaenglich.
+// Otto hat kein sichtbares Filesystem, Quick-Open liefert keinen Mehrwert und
+// waere nur ein weiterer Einstiegspunkt zur versteckten Command-Palette (via "?" und ">").
+// registerAction2(class QuickAccessAction extends Action2 {
+// 	constructor() {
+// 		super({
+// 			id: 'workbench.action.quickOpen',
+// 			title: localize2('quickOpen', "Go to File..."),
+// 			metadata: {
+// 				description: `Quick access`,
+// 				args: [{
+// 					name: 'prefix',
+// 					schema: {
+// 						'type': 'string'
+// 					}
+// 				}]
+// 			},
+// 			keybinding: {
+// 				weight: KeybindingWeight.WorkbenchContrib,
+// 				primary: globalQuickAccessKeybinding.primary,
+// 				secondary: globalQuickAccessKeybinding.secondary,
+// 				mac: globalQuickAccessKeybinding.mac
+// 			},
+// 			f1: true
+// 		});
+// 	}
+//
+// 	run(accessor: ServicesAccessor, prefix: undefined): void {
+// 		const quickInputService = accessor.get(IQuickInputService);
+// 		quickInputService.quickAccess.show(typeof prefix === 'string' ? prefix : undefined, { preserveValue: typeof prefix === 'string' /* preserve as is if provided */ });
+// 	}
+// });
 
-	run(accessor: ServicesAccessor, prefix: undefined): void {
-		const quickInputService = accessor.get(IQuickInputService);
-		quickInputService.quickAccess.show(typeof prefix === 'string' ? prefix : undefined, { preserveValue: typeof prefix === 'string' /* preserve as is if provided */ });
-	}
-});
-
-registerAction2(class QuickAccessAction extends Action2 {
-	constructor() {
-		super({
-			id: 'workbench.action.quickOpenWithModes',
-			title: localize('quickOpenWithModes', "Quick Open"),
-			icon: Codicon.search,
-			menu: {
-				id: MenuId.CommandCenterCenter,
-				order: 100
-			}
-		});
-	}
-
-	async run(accessor: ServicesAccessor): Promise<void> {
-		const openClassicQuickAccess = (): void => {
-			const quickInputService = accessor.get(IQuickInputService);
-			const providerOptions: AnythingQuickAccessProviderRunOptions = {
-				includeHelp: true,
-				from: 'commandCenter',
-			};
-			quickInputService.quickAccess.show(undefined, {
-				preserveValue: true,
-				providerOptions
-			});
-		};
-
-		const configurationService = accessor.get(IConfigurationService);
-		const commandService = accessor.get(ICommandService);
-		const useUnifiedQuickAccess = configurationService.getValue<boolean>(UNIFIED_AGENTS_BAR_SETTING) === true;
-		if (useUnifiedQuickAccess) {
-			try {
-				await commandService.executeCommand('workbench.action.unifiedQuickAccess');
-			} catch {
-				openClassicQuickAccess();
-			}
-			return;
-		}
-
-		openClassicQuickAccess();
-	}
-});
+// DISABLED by Keel (D-017): Command-Center-Search in der Titlebar entfernt.
+// Dieser Action haengt am CommandCenter-Submenu und startet den klassischen
+// Quick-Access ueber die Titlebar-Search-Box. Ohne Registrierung bleibt das
+// Submenu leer -> Search-Feld verschwindet aus der Titelzeile.
+// registerAction2(class QuickAccessAction extends Action2 {
+// 	constructor() {
+// 		super({
+// 			id: 'workbench.action.quickOpenWithModes',
+// 			title: localize('quickOpenWithModes', "Quick Open"),
+// 			icon: Codicon.search,
+// 			menu: {
+// 				id: MenuId.CommandCenterCenter,
+// 				order: 100
+// 			}
+// 		});
+// 	}
+//
+// 	async run(accessor: ServicesAccessor): Promise<void> {
+// 		const openClassicQuickAccess = (): void => {
+// 			const quickInputService = accessor.get(IQuickInputService);
+// 			const providerOptions: AnythingQuickAccessProviderRunOptions = {
+// 				includeHelp: true,
+// 				from: 'commandCenter',
+// 			};
+// 			quickInputService.quickAccess.show(undefined, {
+// 				preserveValue: true,
+// 				providerOptions
+// 			});
+// 		};
+//
+// 		const configurationService = accessor.get(IConfigurationService);
+// 		const commandService = accessor.get(ICommandService);
+// 		const useUnifiedQuickAccess = configurationService.getValue<boolean>(UNIFIED_AGENTS_BAR_SETTING) === true;
+// 		if (useUnifiedQuickAccess) {
+// 			try {
+// 				await commandService.executeCommand('workbench.action.unifiedQuickAccess');
+// 			} catch {
+// 				openClassicQuickAccess();
+// 			}
+// 			return;
+// 		}
+//
+// 		openClassicQuickAccess();
+// 	}
+// });
 
 CommandsRegistry.registerCommand('workbench.action.quickOpenPreviousEditor', async accessor => {
 	const quickInputService = accessor.get(IQuickInputService);

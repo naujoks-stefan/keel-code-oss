@@ -76,6 +76,10 @@ const viewDescriptor: IViewDescriptor = {
 	ctorDescriptor: new SyncDescriptor(SearchView),
 	canToggleVisibility: false,
 	canMoveView: true,
+	// Keel (D-017): when:false versteckt Search-Sidebar fuer Otto-UX.
+	// Container hat hideIfEmpty:true (Zeile 67) und verschwindet dadurch automatisch.
+	// SearchView-Service bleibt registriert, CommandPalette-Prefix weiter nutzbar.
+	when: ContextKeyExpr.false(),
 	openCommandActionDescriptor: {
 		id: viewContainer.id,
 		mnemonicTitle: nls.localize({ key: 'miViewSearch', comment: ['&& denotes a mnemonic'] }, "&&Search"),

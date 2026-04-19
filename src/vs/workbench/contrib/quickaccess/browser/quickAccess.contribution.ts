@@ -8,13 +8,18 @@ import { IQuickAccessRegistry, Extensions } from '../../../../platform/quickinpu
 import { Registry } from '../../../../platform/registry/common/platform.js';
 import { HelpQuickAccessProvider } from '../../../../platform/quickinput/browser/helpQuickAccess.js';
 import { ViewQuickAccessProvider, OpenViewPickerAction, QuickAccessViewPickerAction } from './viewQuickAccess.js';
-import { CommandsQuickAccessProvider, ShowAllCommandsAction, ClearCommandHistoryAction } from './commandsQuickAccess.js';
+import { ClearCommandHistoryAction } from './commandsQuickAccess.js';
+// DISABLED by Keel (D-017): Imports CommandsQuickAccessProvider, ShowAllCommandsAction
+// und EditorContextKeys entfernt — ihre einzigen Verwender sind die auskommentierten
+// Menu- und Provider-Registrations weiter unten. MenuRegistry/MenuId/registerAction2
+// bleiben, weil weiter unten MenubarViewMenu (Open View) und MenubarGoMenu (gotoLine)
+// sowie ClearCommandHistoryAction/OpenViewPicker-Registration aktiv sind.
+// Bei Upstream-Merge: wieder ergaenzen, falls eine Sektion re-aktiviert wird.
 import { MenuRegistry, MenuId, registerAction2 } from '../../../../platform/actions/common/actions.js';
 import { KeyMod } from '../../../../base/common/keyCodes.js';
 import { ContextKeyExpr } from '../../../../platform/contextkey/common/contextkey.js';
 import { inQuickPickContext, getQuickNavigateHandler } from '../../../browser/quickaccess.js';
 import { KeybindingsRegistry, KeybindingWeight } from '../../../../platform/keybinding/common/keybindingsRegistry.js';
-import { EditorContextKeys } from '../../../../editor/common/editorContextKeys.js';
 
 //#region Quick Access Proviers
 
@@ -39,36 +44,44 @@ quickAccessRegistry.registerQuickAccessProvider({
 	helpEntries: [{ description: localize('viewQuickAccess', "Open View"), commandId: OpenViewPickerAction.ID }]
 });
 
-quickAccessRegistry.registerQuickAccessProvider({
-	ctor: CommandsQuickAccessProvider,
-	prefix: CommandsQuickAccessProvider.PREFIX,
-	contextKey: 'inCommandsPicker',
-	placeholder: localize('commandsQuickAccessPlaceholder', "Type the name of a command to run."),
-	helpEntries: [{ description: localize('commandsQuickAccess', "Show and Run Commands"), commandId: ShowAllCommandsAction.ID, commandCenterOrder: 20 }]
-});
+// DISABLED by Keel (D-017): Command-Palette komplett fuer Otto nicht zugaenglich.
+// Der CommandsQuickAccessProvider ist der eigentliche Picker hinter
+// workbench.action.showCommands. Auch ueber den Help-Quick-Access "?" darf er
+// nicht auftauchen. Nicht registriert -> kein Listing, kein Aufruf moeglich.
+// quickAccessRegistry.registerQuickAccessProvider({
+// 	ctor: CommandsQuickAccessProvider,
+// 	prefix: CommandsQuickAccessProvider.PREFIX,
+// 	contextKey: 'inCommandsPicker',
+// 	placeholder: localize('commandsQuickAccessPlaceholder', "Type the name of a command to run."),
+// 	helpEntries: [{ description: localize('commandsQuickAccess', "Show and Run Commands"), commandId: ShowAllCommandsAction.ID, commandCenterOrder: 20 }]
+// });
 
 //#endregion
 
 
 //#region Menu contributions
 
-MenuRegistry.appendMenuItem(MenuId.MenubarViewMenu, {
-	group: '1_open',
-	command: {
-		id: ShowAllCommandsAction.ID,
-		title: localize({ key: 'miCommandPalette', comment: ['&& denotes a mnemonic'] }, "&&Command Palette...")
-	},
-	order: 1
-});
+// DISABLED by Keel (D-017): Command-Palette komplett fuer Otto nicht zugaenglich.
+// Menu "View -> Command Palette..." entfernt.
+// MenuRegistry.appendMenuItem(MenuId.MenubarViewMenu, {
+// 	group: '1_open',
+// 	command: {
+// 		id: ShowAllCommandsAction.ID,
+// 		title: localize({ key: 'miCommandPalette', comment: ['&& denotes a mnemonic'] }, "&&Command Palette...")
+// 	},
+// 	order: 1
+// });
 
-MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
-	group: '1_welcome',
-	command: {
-		id: ShowAllCommandsAction.ID,
-		title: localize({ key: 'miShowAllCommands', comment: ['&& denotes a mnemonic'] }, "Show All Commands")
-	},
-	order: 2
-});
+// DISABLED by Keel (D-017): Command-Palette komplett fuer Otto nicht zugaenglich.
+// Menu "Help -> Show All Commands" entfernt.
+// MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
+// 	group: '1_welcome',
+// 	command: {
+// 		id: ShowAllCommandsAction.ID,
+// 		title: localize({ key: 'miShowAllCommands', comment: ['&& denotes a mnemonic'] }, "Show All Commands")
+// 	},
+// 	order: 2
+// });
 
 MenuRegistry.appendMenuItem(MenuId.MenubarViewMenu, {
 	group: '1_open',
@@ -88,24 +101,28 @@ MenuRegistry.appendMenuItem(MenuId.MenubarGoMenu, {
 	order: 1
 });
 
-MenuRegistry.appendMenuItem(MenuId.GlobalActivity, {
-	group: '1_command',
-	command: {
-		id: ShowAllCommandsAction.ID,
-		title: localize('commandPalette', "Command Palette...")
-	},
-	order: 1
-});
+// DISABLED by Keel (D-017): Command-Palette komplett fuer Otto nicht zugaenglich.
+// Gear-Icon / GlobalActivity-Menu "Command Palette..." entfernt.
+// MenuRegistry.appendMenuItem(MenuId.GlobalActivity, {
+// 	group: '1_command',
+// 	command: {
+// 		id: ShowAllCommandsAction.ID,
+// 		title: localize('commandPalette', "Command Palette...")
+// 	},
+// 	order: 1
+// });
 
-MenuRegistry.appendMenuItem(MenuId.EditorContext, {
-	group: 'z_commands',
-	when: EditorContextKeys.editorSimpleInput.toNegated(),
-	command: {
-		id: ShowAllCommandsAction.ID,
-		title: localize('commandPalette', "Command Palette..."),
-	},
-	order: 1
-});
+// DISABLED by Keel (D-017): Command-Palette komplett fuer Otto nicht zugaenglich.
+// Editor-Right-Click "Command Palette..." entfernt.
+// MenuRegistry.appendMenuItem(MenuId.EditorContext, {
+// 	group: 'z_commands',
+// 	when: EditorContextKeys.editorSimpleInput.toNegated(),
+// 	command: {
+// 		id: ShowAllCommandsAction.ID,
+// 		title: localize('commandPalette', "Command Palette..."),
+// 	},
+// 	order: 1
+// });
 
 //#endregion
 

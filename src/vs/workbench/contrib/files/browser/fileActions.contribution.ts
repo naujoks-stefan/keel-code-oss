@@ -670,7 +670,8 @@ MenuRegistry.appendMenuItem(MenuId.ExplorerContext, {
 // Empty Editor Group / Editor Tabs Container Context Menu
 for (const menuId of [MenuId.EmptyEditorGroupContext, MenuId.EditorTabsBarContext]) {
 	MenuRegistry.appendMenuItem(menuId, { command: { id: NEW_UNTITLED_FILE_COMMAND_ID, title: nls.localize('newFile', "New Text File") }, group: '1_file', order: 10 });
-	MenuRegistry.appendMenuItem(menuId, { command: { id: 'workbench.action.quickOpen', title: nls.localize('openFile', "Open File...") }, group: '1_file', order: 20 });
+	// DISABLED by Keel (D-017): Quick-Open (Ctrl+P) raus -> Menu-Eintrag "Open File..." ohne Handler. Entfernt.
+	// MenuRegistry.appendMenuItem(menuId, { command: { id: 'workbench.action.quickOpen', title: nls.localize('openFile', "Open File...") }, group: '1_file', order: 20 });
 }
 
 // File menu
@@ -751,14 +752,15 @@ MenuRegistry.appendMenuItem(MenuId.MenubarFileMenu, {
 
 // Go to menu
 
-MenuRegistry.appendMenuItem(MenuId.MenubarGoMenu, {
-	group: '3_global_nav',
-	command: {
-		id: 'workbench.action.quickOpen',
-		title: nls.localize({ key: 'miGotoFile', comment: ['&& denotes a mnemonic'] }, "Go to &&File...")
-	},
-	order: 1
-});
+// DISABLED by Keel (D-017): Quick-Open (Ctrl+P) raus -> Menu "Go -> Go to File..." entfernt.
+// MenuRegistry.appendMenuItem(MenuId.MenubarGoMenu, {
+// 	group: '3_global_nav',
+// 	command: {
+// 		id: 'workbench.action.quickOpen',
+// 		title: nls.localize({ key: 'miGotoFile', comment: ['&& denotes a mnemonic'] }, "Go to &&File...")
+// 	},
+// 	order: 1
+// });
 
 
 // Chat used attachment anchor context menu

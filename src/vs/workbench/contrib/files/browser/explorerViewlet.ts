@@ -279,7 +279,11 @@ export const VIEW_CONTAINER: ViewContainer = viewContainerRegistry.registerViewC
 		keybindings: { primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyE },
 		order: 0
 	},
-}, ViewContainerLocation.Sidebar, { isDefault: true });
+	// Keel (D-011 V2): isDefault auf false. hideIfEmpty allein reicht nicht,
+	// weil der Container mit isDefault:true unabhaengig von seinen Views als
+	// Default-Sidebar-Icon in der Activity-Bar auftaucht. isDefault:false +
+	// alle Views when:false + hideIfEmpty:true -> Folder-Icon endgueltig weg.
+}, ViewContainerLocation.Sidebar, { isDefault: false });
 
 const openFolder = localize('openFolder', "Open Folder");
 const addAFolder = localize('addAFolder', "add a folder");

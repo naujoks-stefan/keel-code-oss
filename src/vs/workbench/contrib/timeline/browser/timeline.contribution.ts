@@ -37,7 +37,9 @@ export class TimelinePaneDescriptor implements IViewDescriptor {
 	readonly canToggleVisibility = true;
 	readonly hideByDefault = false;
 	readonly canMoveView = true;
-	readonly when = TimelineHasProviderContext;
+	// Keel (D-011 V3): Timeline-View versteckt - Explorer-Container soll komplett leer
+	// sein, damit Folder-Icon in Activity-Bar verschwindet. Overridet TimelineHasProviderContext.
+	readonly when = ContextKeyExpr.false();
 
 	focusCommand = { id: 'timeline.focus' };
 }
