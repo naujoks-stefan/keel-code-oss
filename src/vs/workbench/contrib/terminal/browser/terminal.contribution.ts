@@ -8,6 +8,7 @@ import { KeyCode, KeyMod } from '../../../../base/common/keyCodes.js';
 import { Schemas } from '../../../../base/common/network.js';
 import { URI } from '../../../../base/common/uri.js';
 import * as nls from '../../../../nls.js';
+import { ContextKeyExpr } from '../../../../platform/contextkey/common/contextkey.js';
 import { Extensions as DragAndDropExtensions, IDragAndDropContributionRegistry, IDraggedResourceEditorInput } from '../../../../platform/dnd/browser/dnd.js';
 import { SyncDescriptor } from '../../../../platform/instantiation/common/descriptors.js';
 import { InstantiationType, registerSingleton } from '../../../../platform/instantiation/common/extensions.js';
@@ -123,6 +124,15 @@ Registry.as<IViewsRegistry>(ViewContainerExtensions.ViewsRegistry).registerViews
 	canMoveView: true,
 	ctorDescriptor: new SyncDescriptor(TerminalViewPane),
 	windowVisibility: WindowVisibility.Both,
+	// Keel (D-007 V3): when:false versteckt den Terminal-View UI-seitig, aber der
+	// Descriptor bleibt registriert — damit ueberleben _viewDescriptorService-Queries
+	// in terminalActions/terminalGroup/terminalEditingService, und Tasks/Debug/Notebook
+	// koennen weiter den terminalService nutzen. Container bleibt via hideIfEmpty:true
+	// automatisch unsichtbar wenn keine weiteren Views existieren.
+	when: ContextKeyExpr.false(),
+	// openCommandActionDescriptor bleibt drin — Keybinding Ctrl+` feuert den Toggle-Command,
+	// der den (hidden) View zu oeffnen versucht; das ist harmlos fuer Otto weil er Ctrl+`
+	// nicht kennt, und Power-User kann per Config `when` spaeter toggeln.
 	openCommandActionDescriptor: {
 		id: TerminalCommandId.Toggle,
 		mnemonicTitle: nls.localize({ key: 'miToggleIntegratedTerminal', comment: ['&& denotes a mnemonic'] }, "&&Terminal"),
