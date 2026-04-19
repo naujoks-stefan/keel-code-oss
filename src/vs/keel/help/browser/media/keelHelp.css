@@ -1,0 +1,165 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/*
+ * Styling fuer den Keel-Help-Editor (Welle 11).
+ *
+ * Der Editor ist bewusst minimal — zentrierte Karte mit ausreichend Luft,
+ * damit Otto in einem stressigen Moment (nach Stufe-2-Toast) einen ruhigen
+ * Landeplatz sieht.
+ */
+
+.keel-help-root {
+	width: 100%;
+	height: 100%;
+	overflow-y: auto;
+	background-color: var(--vscode-editor-background);
+	color: var(--vscode-foreground);
+	font-family: var(--vscode-font-family);
+	font-size: var(--vscode-font-size);
+}
+
+.keel-help-container {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+	min-height: 100%;
+	box-sizing: border-box;
+	padding: 48px 32px;
+}
+
+.keel-help-inner {
+	width: 100%;
+	max-width: 560px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 20px;
+}
+
+/* --- Header --- */
+.keel-help-header {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.keel-help-icon {
+	font-size: 48px;
+	color: var(--vscode-textLink-foreground, var(--vscode-foreground));
+	line-height: 1;
+}
+
+.keel-help-title {
+	font-size: 28px;
+	font-weight: 600;
+	line-height: 1.2;
+	margin: 0;
+	text-align: center;
+}
+
+.keel-help-subheadline {
+	font-size: 15px;
+	line-height: 1.5;
+	color: var(--vscode-descriptionForeground);
+	margin: 0;
+	text-align: center;
+}
+
+/* --- Body --- */
+.keel-help-body {
+	font-size: 14px;
+	line-height: 1.6;
+	margin: 0;
+	text-align: left;
+	width: 100%;
+}
+
+/* --- Kontakt --- */
+.keel-help-contact {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 14px 16px;
+	background-color: var(--vscode-textBlockQuote-background, rgba(128, 128, 128, 0.08));
+	border-radius: 6px;
+}
+
+.keel-help-contact-label {
+	font-size: 13px;
+	line-height: 1.4;
+	color: var(--vscode-descriptionForeground);
+	margin: 0;
+}
+
+.keel-help-contact-email {
+	font-family: Menlo, Monaco, "Courier New", monospace;
+	font-size: 14px;
+	color: var(--vscode-textLink-foreground);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.keel-help-contact-email:hover,
+.keel-help-contact-email:focus-visible {
+	text-decoration: underline;
+	outline: none;
+}
+
+/* --- Recover-Button --- */
+.keel-help-recover-wrapper {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	margin-top: 4px;
+}
+
+.keel-help-recover-button {
+	all: unset;
+	box-sizing: border-box;
+	cursor: pointer;
+	padding: 8px 18px;
+	font-family: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	background-color: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	border-radius: 3px;
+	min-width: 160px;
+	text-align: center;
+}
+
+.keel-help-recover-button:hover {
+	background-color: var(--vscode-button-hoverBackground);
+}
+
+.keel-help-recover-button:focus-visible {
+	outline: 1px solid var(--vscode-focusBorder);
+	outline-offset: 2px;
+}
+
+/* --- Footer-Hint --- */
+.keel-help-footer {
+	margin-top: 24px;
+	font-size: 12px;
+	line-height: 1.4;
+	color: var(--vscode-descriptionForeground);
+	text-align: center;
+}
+
+/* --- High-Contrast --- */
+.hc-black .keel-help-contact,
+.hc-light .keel-help-contact {
+	border: 1px solid var(--vscode-contrastBorder);
+	background-color: transparent;
+}
+
+.hc-black .keel-help-recover-button,
+.hc-light .keel-help-recover-button {
+	border: 1px solid var(--vscode-contrastBorder);
+}

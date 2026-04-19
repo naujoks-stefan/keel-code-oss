@@ -600,6 +600,11 @@ export class GlobalActivityActionViewItem extends AbstractGlobalActivityActionVi
 		@IKeybindingService keybindingService: IKeybindingService,
 		@IInstantiationService instantiationService: IInstantiationService,
 		@IActivityService activityService: IActivityService,
+		// Keel (D-026): ProductService + CommandService werden injiziert, damit das
+		// Gear-Icon je nach Flag `keelReplaceManageWithSettings` das Manage-Dropdown
+		// oeffnet (Upstream-Default) oder den Keel-Settings-Flyout-Command aufruft.
+		@IProductService private readonly productService: IProductService,
+		@ICommandService private readonly globalActivityCommandService: ICommandService,
 	) {
 		const action = instantiationService.createInstance(CompositeBarAction, {
 			id: GLOBAL_ACTIVITY_ID,
@@ -618,6 +623,34 @@ export class GlobalActivityActionViewItem extends AbstractGlobalActivityActionVi
 
 	override render(container: HTMLElement): void {
 		super.render(container);
+
+		// Keel (D-026): Wenn in product.json `keelReplaceManageWithSettings` auf
+		// true gesetzt ist, intercepten wir den Mouse-Down + Touch + Keyboard
+		// _vor_ der Upstream-Handler-Kette und feuern stattdessen unseren
+		// Keel-Settings-Flyout-Command. Capture-Phase + stopPropagation stellt
+		// sicher, dass die Upstream-Dropdown-Handler ueberhaupt nicht mehr
+		// getriggert werden. Ohne das Flag (Upstream-Default / andere Forks)
+		// bleibt das Verhalten unveraendert.
+		const productAsKeel = this.productService as { readonly keelReplaceManageWithSettings?: boolean };
+		if (productAsKeel.keelReplaceManageWithSettings) {
+			// Marker-Attribut: das Flyout-Click-Ausserhalb-Handler prueft dieses
+			// Attribut, um NICHT auf einen Gear-Icon-Klick mit "hide" zu reagieren.
+			container.setAttribute('data-keel-settings-trigger', 'true');
+
+			const triggerSettings = (e: Event) => {
+				e.stopPropagation();
+				e.preventDefault();
+				void this.globalActivityCommandService.executeCommand('keel.settings.showFlyout');
+			};
+			this._register(addDisposableListener(container, EventType.MOUSE_DOWN, triggerSettings, /* useCapture */ true));
+			this._register(addDisposableListener(container, TouchEventType.Tap, triggerSettings, /* useCapture */ true));
+			this._register(addDisposableListener(container, EventType.KEY_UP, (e: KeyboardEvent) => {
+				const event = new StandardKeyboardEvent(e);
+				if (event.equals(KeyCode.Enter) || event.equals(KeyCode.Space)) {
+					triggerSettings(e);
+				}
+			}, /* useCapture */ true));
+		}
 
 		this.profileBadge = append(container, $('.profile-badge'));
 		this.profileBadgeContent = append(this.profileBadge, $('.profile-badge-content'));
@@ -655,6 +688,14 @@ export class GlobalActivityActionViewItem extends AbstractGlobalActivityActionVi
 	}
 
 	protected override computeTitle(): string {
+		// Keel (D-026): Wenn das Gear-Icon auf das Keel-Settings-Flyout umgebogen
+		// ist, tragen Tooltip und Title `Einstellungen` statt `Manage` / `Manage
+		// <Profile> (Profile)`. Damit ist die Oberflaeche konsistent mit dem
+		// Flyout-Header und mit Otto-UX-Prinzipien.
+		const productAsKeel = this.productService as { readonly keelReplaceManageWithSettings?: boolean };
+		if (productAsKeel.keelReplaceManageWithSettings) {
+			return localize('keel.globalActivity.settingsTitle', "Einstellungen");
+		}
 		return this.userDataProfileService.currentProfile.isDefault ? super.computeTitle() : localize('manage profile', "Manage {0} (Profile)", this.userDataProfileService.currentProfile.name);
 	}
 }
@@ -711,7 +752,10 @@ export class SimpleGlobalActivityActionViewItem extends GlobalActivityActionView
 		@IKeybindingService keybindingService: IKeybindingService,
 		@IInstantiationService instantiationService: IInstantiationService,
 		@IActivityService activityService: IActivityService,
-		@IStorageService storageService: IStorageService
+		@IStorageService storageService: IStorageService,
+		// Keel (D-026): Services an GlobalActivityActionViewItem durchreichen.
+		@IProductService simpleProductService: IProductService,
+		@ICommandService simpleCommandService: ICommandService,
 	) {
 		super(() => simpleActivityContextMenuActions(storageService, false),
 			{
@@ -722,7 +766,7 @@ export class SimpleGlobalActivityActionViewItem extends GlobalActivityActionView
 				}),
 				hoverOptions,
 				compact: true,
-			}, () => undefined, userDataProfileService, themeService, hoverService, menuService, contextMenuService, contextKeyService, configurationService, environmentService, keybindingService, instantiationService, activityService);
+			}, () => undefined, userDataProfileService, themeService, hoverService, menuService, contextMenuService, contextKeyService, configurationService, environmentService, keybindingService, instantiationService, activityService, simpleProductService, simpleCommandService);
 	}
 }
 

@@ -403,6 +403,18 @@ import '../keel/chat-stub/browser/keelChatStub.contribution.js';
 // Contribution-Hook noetig, der Patch kuemmert sich um Lifecycle.
 import '../keel/cockpit-anchor/browser/cockpitAnchor.contribution.js';
 
+// Keel Settings (Welle 11, D-026 + D-028) — eigener Settings-Flyout-Bereich,
+// der das VSCode-Manage-Dropdown am Gear-Icon ersetzt (nur wenn Flag
+// `keelReplaceManageWithSettings` in product.json gesetzt). Side-Effect-Import
+// registriert `IKeelSettingsService` als Singleton und die Show/Hide-Actions.
+import '../keel/settings/browser/keelSettings.contribution.js';
+
+// Keel Help (Welle 11, D-027) — eigener Help-Editor als Landeplatz fuer den
+// `[Hilfe]`-Button des Stufe-2-Toasts. Registriert EditorPane, EditorInput-
+// Serializer, Resolver, und die Commands `keel.help.openSupport` +
+// `keel.platform.retryStart`.
+import '../keel/help/browser/keelHelp.contribution.js';
+
 // Welcome Onboarding
 import './contrib/welcomeOnboarding/browser/welcomeOnboarding.contribution.js';
 

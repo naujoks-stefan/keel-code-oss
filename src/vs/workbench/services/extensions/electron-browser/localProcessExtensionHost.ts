@@ -23,7 +23,7 @@ import { extensionHostGraceTimeMs, IExtensionHostProcessOptions, IExtensionHostS
 import { ILabelService } from '../../../../platform/label/common/label.js';
 import { ILogService, ILoggerService } from '../../../../platform/log/common/log.js';
 import { INativeHostService } from '../../../../platform/native/common/native.js';
-import { INotificationService, NotificationPriority, Severity } from '../../../../platform/notification/common/notification.js';
+import { INotificationHandle, INotificationService, NotificationPriority, Severity } from '../../../../platform/notification/common/notification.js';
 import { IProductService } from '../../../../platform/product/common/productService.js';
 import { ITelemetryService } from '../../../../platform/telemetry/common/telemetry.js';
 import { isLoggingOnly } from '../../../../platform/telemetry/common/telemetryUtils.js';
@@ -39,6 +39,7 @@ import { IHostService } from '../../host/browser/host.js';
 import { ILifecycleService, WillShutdownEvent } from '../../lifecycle/common/lifecycle.js';
 import { parseExtensionDevOptions } from '../common/extensionDevOptions.js';
 import { IDefaultLogLevelsService } from '../../log/common/defaultLogLevels.js';
+import { ICommandService } from '../../../../platform/commands/common/commands.js';
 
 export interface ILocalProcessExtensionHostInitData {
 	readonly extensions: ExtensionHostExtensions;
@@ -116,6 +117,13 @@ export class NativeLocalProcessExtensionHost extends Disposable implements IExte
 	// Resources, in order they get acquired/created when .start() is called:
 	private _inspectListener: IExtensionInspectInfo | null;
 	private _extensionHostProcess: ExtensionHostProcess | null;
+
+	// Keel (D-027): Handles fuer die zweistufige Otto-Toast-Kette beim
+	// Plattform-Startup-Hang. `_keelStage1Handle` haelt den Info-Toast
+	// (Stufe 1, 10s-Schwelle), `_keelStage2Timer` den 30s-Timer bis Stufe 2.
+	// Beide werden storniert, sobald der Extension-Host erfolgreich startet.
+	private _keelStage1Handle: INotificationHandle | undefined;
+	private _keelStage2Timer: Timeout | undefined;
 	private _messageProtocol: Promise<IMessagePassingProtocol> | null;
 
 	constructor(
@@ -138,6 +146,12 @@ export class NativeLocalProcessExtensionHost extends Disposable implements IExte
 		@IShellEnvironmentService private readonly _shellEnvironmentService: IShellEnvironmentService,
 		@IExtensionHostStarter private readonly _extensionHostStarter: IExtensionHostStarter,
 		@IDefaultLogLevelsService private readonly _defaultLogLevelsService: IDefaultLogLevelsService,
+		// Keel (D-027): ICommandService, damit Toast-Stufe-2-Buttons die Keel-
+		// Commands `keel.platform.retryStart` und `keel.help.openSupport` triggern
+		// koennen. Ohne diesen Service muessten wir Strings direkt ueber
+		// NotificationService-Actions fuer `workbench.action.reloadWindow` routen —
+		// das wird in Welle 12+ eventuell erweitert (z.B. "vorher State sichern").
+		@ICommandService private readonly _commandService: ICommandService,
 	) {
 		super();
 		const devOpts = parseExtensionDevOptions(this._environmentService);
@@ -347,8 +361,14 @@ export class NativeLocalProcessExtensionHost extends Disposable implements IExte
 				// Keel-Team-Debugging erhalten. Das Flag wird via fork-brand.mjs in
 				// product.json gesetzt.
 				// Siehe auch src/vs/keel/notifications/browser/keelNotificationPolicy.ts.
+				//
+				// Keel (D-027, Welle 11): Erweiterung — nach 30s weiterer Wartezeit
+				// triggert ein Stufe-2-Toast mit `[Erneut versuchen]` + `[Hilfe]`-
+				// Buttons. Stufe-1 wird dabei geschlossen. Wenn der Extension-Host
+				// zwischen Stufe 1 und 30s doch noch startet, wird der Stufe-2-Timer
+				// storniert (siehe `_performHandshake`-Erfolgspfad unten).
 				if ((this._productService as { readonly keelSilenceExtensionHostToasts?: boolean }).keelSilenceExtensionHostToasts) {
-					this._notificationService.prompt(Severity.Info,
+					this._keelStage1Handle = this._notificationService.prompt(Severity.Info,
 						// allow-any-unicode-next-line
 						nls.localize('keel.platform.start.slow', "Keel startet langsamer als gewoehnlich. Einen Moment, bitte."),
 						[],
@@ -357,6 +377,34 @@ export class NativeLocalProcessExtensionHost extends Disposable implements IExte
 							priority: NotificationPriority.DEFAULT,
 						}
 					);
+
+					this._keelStage2Timer = setTimeout(() => {
+						this._keelStage1Handle?.close();
+						this._keelStage1Handle = undefined;
+						this._notificationService.prompt(Severity.Warning,
+							// allow-any-unicode-next-line
+							nls.localize('keel.platform.start.failed', "Keel laesst sich gerade nicht starten."),
+							[
+								{
+									label: nls.localize('keel.platform.start.retry', "Erneut versuchen"),
+									run: () => {
+										void this._commandService.executeCommand('keel.platform.retryStart');
+									},
+								},
+								{
+									label: nls.localize('keel.platform.start.help', "Hilfe"),
+									run: () => {
+										void this._commandService.executeCommand('keel.help.openSupport');
+									},
+								},
+							],
+							{
+								sticky: true,
+								priority: NotificationPriority.URGENT,
+							}
+						);
+						this._keelStage2Timer = undefined;
+					}, 30_000);
 					return;
 				}
 
@@ -381,6 +429,18 @@ export class NativeLocalProcessExtensionHost extends Disposable implements IExte
 		const protocol = await this._establishProtocol(this._extensionHostProcess, opts);
 		await this._performHandshake(protocol);
 		clearTimeout(startupTimeoutHandle);
+
+		// Keel (D-027): Wenn zwischen Stufe-1-Toast und 30s-Schwelle der
+		// Extension-Host doch noch startet, stornieren wir den Stufe-2-Timer
+		// und schliessen den Stufe-1-Info-Toast. Otto sieht den Start-Erfolg,
+		// ohne weitere Interaktion zu muessen.
+		if (this._keelStage2Timer) {
+			clearTimeout(this._keelStage2Timer);
+			this._keelStage2Timer = undefined;
+		}
+		this._keelStage1Handle?.close();
+		this._keelStage1Handle = undefined;
+
 		return protocol;
 	}
 
