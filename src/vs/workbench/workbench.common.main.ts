@@ -299,9 +299,12 @@ import './contrib/customEditor/browser/customEditor.contribution.js';
 // External Uri Opener
 import './contrib/externalUriOpener/common/externalUriOpener.contribution.js';
 
-// Extensions Management
-import './contrib/extensions/browser/extensions.contribution.js';
-import './contrib/extensions/browser/extensionsViewlet.js';
+// Extensions Management — DISABLED by Keel (D-008 / P-013):
+// Extensions-Tab in der Sidebar komplett entfernt. Extensions-Services
+// (IExtensionsWorkbenchService, GalleryService) werden separat in Zeile 91
+// registriert und bleiben verfuegbar. Keel Store kommt spaeter in src/vs/keel/store/.
+// import './contrib/extensions/browser/extensions.contribution.js';
+// import './contrib/extensions/browser/extensionsViewlet.js';
 
 // Output View
 import './contrib/output/browser/output.contribution.js';
