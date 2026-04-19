@@ -5,6 +5,8 @@
 
 import { $, addDisposableListener, append, clearNode, EventType } from '../../../base/browser/dom.js';
 import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
+import { KeyCode } from '../../../base/common/keyCodes.js';
+import { StandardKeyboardEvent } from '../../../base/browser/keyboardEvent.js';
 import { URI } from '../../../base/common/uri.js';
 import { keelHelpStrings } from './strings/keelHelpStrings.js';
 
@@ -16,6 +18,19 @@ export interface IKeelHelpViewHandlers {
 	readonly onOpenCockpit: () => void;
 	/** Wird aufgerufen, wenn Otto die Kontakt-E-Mail anklickt. */
 	readonly onOpenEmail: (mailto: URI) => void;
+}
+
+/**
+ * Zusatz-Daten, die die View fuer das FAQ-Rendering braucht (Welle 12, D-031).
+ *
+ * `dataLocation` wird in zwei FAQ-Antworten (Reports + Daten) als
+ * Platzhalter eingesetzt. Der EditorPane liest sie aus dem
+ * `IKeelSettingsService` und reicht sie hier durch, damit die View keine
+ * Service-Dependencies zieht.
+ */
+export interface IKeelHelpViewData {
+	readonly dataLocation: string;
+	readonly contactEmail: string;
 }
 
 /**
@@ -39,6 +54,7 @@ export class KeelHelpView extends Disposable {
 	constructor(
 		private readonly parent: HTMLElement,
 		private readonly handlers: IKeelHelpViewHandlers,
+		private readonly data: IKeelHelpViewData,
 	) {
 		super();
 	}
@@ -65,8 +81,126 @@ export class KeelHelpView extends Disposable {
 		this.renderHeader(inner);
 		this.renderBody(inner);
 		this.renderContact(inner);
+		this.renderFaq(inner);
 		this.renderRecoverButton(inner);
 		this.renderFooter(inner);
+	}
+
+	/**
+	 * Welle-12 (D-031): FAQ-Accordion mit 5 Items. Ein Item zur Zeit offen,
+	 * Klick-Toggle, Esc schliesst aktuelles. Mobile: Cards full-width
+	 * (CSS-Grid mit `1fr`).
+	 *
+	 * Keyboard-Navigation:
+	 *  - Enter / Space auf dem Header: toggelt das Item.
+	 *  - Esc: schliesst das aktuell offene Item.
+	 */
+	private renderFaq(parent: HTMLElement): void {
+		const block = append(parent, $<HTMLDivElement>('div.keel-help-faq', {
+			'data-keel-help-faq': 'true',
+			role: 'region',
+			'aria-label': keelHelpStrings.faqHeader(),
+		}));
+
+		append(block, $<HTMLHeadingElement>('h2.keel-help-faq-header', {}, keelHelpStrings.faqHeader()));
+
+		const list = append(block, $<HTMLDivElement>('div.keel-help-faq-list'));
+
+		const items: Array<{ question: string; answer: string }> = [
+			{
+				question: keelHelpStrings.faqReportsQuestion(),
+				answer: keelHelpStrings.faqReportsAnswer(this.data.dataLocation),
+			},
+			{
+				question: keelHelpStrings.faqCockpitEmptyQuestion(),
+				answer: keelHelpStrings.faqCockpitEmptyAnswer(),
+			},
+			{
+				question: keelHelpStrings.faqSlowQuestion(),
+				answer: keelHelpStrings.faqSlowAnswer(),
+			},
+			{
+				question: keelHelpStrings.faqBugQuestion(),
+				answer: keelHelpStrings.faqBugAnswer(this.data.contactEmail),
+			},
+			{
+				question: keelHelpStrings.faqDataQuestion(),
+				answer: keelHelpStrings.faqDataAnswer(this.data.dataLocation),
+			},
+		];
+
+		// State: Index des offenen Items (oder -1, wenn alle zu sind).
+		let openIndex = -1;
+		const headers: HTMLButtonElement[] = [];
+		const panels: HTMLDivElement[] = [];
+
+		const applyState = () => {
+			for (let i = 0; i < headers.length; i++) {
+				const isOpen = i === openIndex;
+				const header = headers[i];
+				const panel = panels[i];
+				if (!header || !panel) {
+					continue;
+				}
+				header.setAttribute('aria-expanded', String(isOpen));
+				panel.classList.toggle('keel-help-faq-panel-open', isOpen);
+				panel.setAttribute('aria-hidden', String(!isOpen));
+			}
+		};
+
+		items.forEach((item, index) => {
+			const itemEl = append(list, $<HTMLDivElement>('div.keel-help-faq-item', {
+				'data-keel-help-faq-item': String(index),
+			}));
+
+			const header = append(itemEl, $<HTMLButtonElement>('button.keel-help-faq-question', {
+				type: 'button',
+				'aria-expanded': 'false',
+				'aria-label': keelHelpStrings.faqItemAriaLabel(item.question),
+			}));
+			append(header, $<HTMLSpanElement>('span.keel-help-faq-arrow.codicon.codicon-chevron-right', { 'aria-hidden': 'true' }));
+			append(header, $<HTMLSpanElement>('span.keel-help-faq-question-text', {}, item.question));
+
+			const panel = append(itemEl, $<HTMLDivElement>('div.keel-help-faq-panel', {
+				role: 'region',
+				'aria-hidden': 'true',
+			}));
+			append(panel, $<HTMLParagraphElement>('p.keel-help-faq-answer', {}, item.answer));
+
+			headers.push(header);
+			panels.push(panel);
+
+			this.viewDisposables.add(addDisposableListener(header, EventType.CLICK, (e: MouseEvent) => {
+				e.preventDefault();
+				openIndex = openIndex === index ? -1 : index;
+				applyState();
+			}));
+
+			this.viewDisposables.add(addDisposableListener(header, EventType.KEY_DOWN, (e: KeyboardEvent) => {
+				const evt = new StandardKeyboardEvent(e);
+				if (evt.keyCode === KeyCode.Enter || evt.keyCode === KeyCode.Space) {
+					evt.preventDefault();
+					evt.stopPropagation();
+					openIndex = openIndex === index ? -1 : index;
+					applyState();
+				}
+			}));
+		});
+
+		// Esc schliesst das aktuell offene Item. Wir binden an die Liste
+		// (bubble-up), damit der Listener unabhaengig vom Fokus-Item
+		// greift, solange Otto sich innerhalb der FAQ bewegt.
+		this.viewDisposables.add(addDisposableListener(list, EventType.KEY_DOWN, (e: KeyboardEvent) => {
+			const evt = new StandardKeyboardEvent(e);
+			if (evt.keyCode === KeyCode.Escape && openIndex !== -1) {
+				evt.preventDefault();
+				evt.stopPropagation();
+				openIndex = -1;
+				applyState();
+			}
+		}));
+
+		applyState();
 	}
 
 	private renderHeader(parent: HTMLElement): void {
