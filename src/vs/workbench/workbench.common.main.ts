@@ -385,6 +385,12 @@ import './contrib/welcomeViews/common/newFile.contribution.js';
 // Keel Welcome (D-014) — Otto-UX-Welcome, ersetzt Standard-Welcome funktional.
 import '../keel/welcome/browser/keelWelcome.contribution.js';
 
+// Keel Chat-Stub (D-015) — No-Op-Stubs fuer IChatAgentService / ILanguageModelsService /
+// IAgentNetworkFilterService. Behebt 23 Contribution-Boot-Errors, die durch die Chat-
+// Deaktivierung (D-013) in externen Consumern (Notebook, InlineChat, browserView, Tasks)
+// ausgeloest werden. Echter Keel-Chat folgt spaeter ueber @keel/core.
+import '../keel/chat-stub/browser/keelChatStub.contribution.js';
+
 // Welcome Onboarding
 import './contrib/welcomeOnboarding/browser/welcomeOnboarding.contribution.js';
 
