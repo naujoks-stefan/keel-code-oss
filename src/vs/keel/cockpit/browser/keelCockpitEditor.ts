@@ -15,6 +15,8 @@ import { IThemeService } from '../../../platform/theme/common/themeService.js';
 import { KeelCockpitInput } from './keelCockpitInput.js';
 import { KeelCockpitView } from './keelCockpitView.js';
 import { IKeelCockpitService } from './keelCockpitService.js';
+import { IKeelProjectService } from './keelProjectService.js';
+import { IKeelProjectLeadService } from './keelProjectLeadService.js';
 import { KEEL_COCKPIT_EDITOR_ID } from '../common/keelCockpit.js';
 import { keelCockpitStrings } from './strings/keelCockpitStrings.js';
 
@@ -47,6 +49,8 @@ export class KeelCockpitEditor extends EditorPane {
 		@IStorageService storageService: IStorageService,
 		@INotificationService private readonly notificationService: INotificationService,
 		@IKeelCockpitService private readonly cockpitService: IKeelCockpitService,
+		@IKeelProjectService private readonly projectService: IKeelProjectService,
+		@IKeelProjectLeadService private readonly projectLeadService: IKeelProjectLeadService,
 	) {
 		super(KeelCockpitEditor.ID, group, telemetryService, themeService, storageService);
 	}
@@ -106,6 +110,7 @@ export class KeelCockpitEditor extends EditorPane {
 		const view = new KeelCockpitView(this.rootElement, {
 			onNewTask: prompt => this.handleNewTask(prompt),
 			onNotify: message => this.notificationService.info(message),
+			onWarn: message => this.notificationService.warn(message),
 			onConfirm: (message, yesLabel, noLabel, onYes, onNo) => {
 				this.notificationService.prompt(
 					Severity.Warning,
@@ -116,7 +121,7 @@ export class KeelCockpitEditor extends EditorPane {
 					],
 				);
 			},
-		}, this.cockpitService);
+		}, this.cockpitService, this.projectService, this.projectLeadService);
 
 		view.render();
 		this.view = view;

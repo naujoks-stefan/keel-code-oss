@@ -34,6 +34,9 @@ import { KeelCockpitInput } from './keelCockpitInput.js';
 // aus `keelCockpitService.ts` ausgefuehrt wird, sobald diese Contribution
 // geladen wird.
 import './keelCockpitService.js';
+// Welle 9: Projekt- und Projektleiter-Service analog registrieren.
+import './keelProjectService.js';
+import './keelProjectLeadService.js';
 import { KEEL_COCKPIT_SHOW_COMMAND_ID } from '../common/keelCockpit.js';
 
 /**

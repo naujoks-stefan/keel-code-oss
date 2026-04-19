@@ -56,7 +56,346 @@
 	box-sizing: border-box;
 }
 
-/* --- Header --- */
+/* --- Projekt-Header (Welle 9) --- */
+
+.keel-project-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 14px 32px;
+	border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(127, 127, 127, 0.3));
+	gap: 16px;
+	min-height: 48px;
+	box-sizing: border-box;
+}
+
+.keel-project-header-left {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.keel-project-header-icon.codicon {
+	font-size: 20px;
+	line-height: 1;
+	opacity: 0.7;
+	color: var(--vscode-foreground);
+	flex-shrink: 0;
+}
+
+.keel-project-header-title {
+	font-size: 1.15rem;
+	font-weight: 600;
+	margin: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.keel-project-header-right {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+/* Chevron-Button neben Projekt-Name oeffnet Projekt-Menue (Rename). */
+.keel-project-header-chevron {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	background: transparent;
+	color: inherit;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	opacity: 0.7;
+	transition: opacity 120ms ease, background-color 120ms ease;
+	flex-shrink: 0;
+}
+
+.keel-project-header-chevron:hover {
+	opacity: 1;
+	background-color: var(--vscode-toolbar-hoverBackground, rgba(127, 127, 127, 0.12));
+}
+
+.keel-project-header-chevron:focus-visible {
+	outline: 2px solid var(--vscode-focusBorder);
+	outline-offset: 1px;
+	opacity: 1;
+}
+
+.keel-project-header-chevron .codicon {
+	font-size: 14px;
+	line-height: 1;
+}
+
+/*
+ * Dropdown-Menue unter dem Chevron. Positioniert via `position: absolute`
+ * relativ zum Header-Left (der als Anchor dient).
+ */
+.keel-project-header-left {
+	position: relative;
+}
+
+.keel-project-header-menu {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 36px;
+	min-width: 160px;
+	background-color: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+	border: 1px solid var(--vscode-editorWidget-border, rgba(127, 127, 127, 0.3));
+	border-radius: 6px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+	padding: 4px 0;
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+}
+
+.keel-project-header-menu-item {
+	display: block;
+	width: 100%;
+	text-align: left;
+	padding: 6px 14px;
+	background: transparent;
+	color: inherit;
+	border: none;
+	font-family: inherit;
+	font-size: 0.9rem;
+	cursor: pointer;
+}
+
+.keel-project-header-menu-item:hover,
+.keel-project-header-menu-item:focus-visible {
+	background-color: var(--vscode-list-hoverBackground, rgba(127, 127, 127, 0.12));
+	outline: none;
+}
+
+/* Inline-Rename: Input-Feld ersetzt den Titel im Header. */
+.keel-project-header-rename-input {
+	font-size: 1.15rem;
+	font-weight: 600;
+	padding: 2px 8px;
+	min-width: 220px;
+	background-color: var(--vscode-input-background);
+	color: var(--vscode-input-foreground);
+	border: 1px solid var(--vscode-focusBorder, var(--vscode-input-border, transparent));
+	border-radius: 4px;
+	font-family: inherit;
+	box-sizing: border-box;
+}
+
+.keel-project-header-rename-input:focus {
+	outline: none;
+	box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+}
+
+/* --- Projektleiter-Card (Welle 9) --- */
+
+.keel-project-lead-card {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	width: 100%;
+	max-width: 900px;
+	min-height: 90px;
+	max-height: 112px;
+	margin: 24px auto 8px auto;
+	padding: 18px 24px;
+	background-color: var(--vscode-editorWidget-background, rgba(127, 127, 127, 0.08));
+	border: 1px solid var(--vscode-editorWidget-border, transparent);
+	border-radius: 14px;
+	box-sizing: border-box;
+	transition: border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.keel-project-lead-icon-wrap {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	flex-shrink: 0;
+	background-color: rgba(127, 127, 127, 0.08);
+	border: 2px solid var(--vscode-editorWidget-border, rgba(127, 127, 127, 0.3));
+	transition: border-color 220ms ease, background-color 220ms ease;
+}
+
+.keel-project-lead-icon.codicon {
+	font-size: 28px;
+	line-height: 1;
+	color: var(--vscode-foreground);
+}
+
+.keel-project-lead-mid {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+	flex: 1;
+}
+
+.keel-project-lead-title {
+	font-size: 1.2rem;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.keel-project-lead-status {
+	font-size: 0.95rem;
+	opacity: 0.85;
+	line-height: 1.4;
+}
+
+.keel-project-lead-aggregate {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	max-width: 220px;
+}
+
+/* Actions-Slot in der Projektleiter-Card: rechts-aligned, haelt den CTA. */
+.keel-project-lead-actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	flex-shrink: 0;
+}
+
+.keel-project-lead-new-task-btn {
+	white-space: nowrap;
+}
+
+.keel-project-lead-aggregate-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: 999px;
+	font-size: 0.85rem;
+	font-weight: 500;
+	background-color: rgba(127, 127, 127, 0.1);
+	border: 1px solid var(--vscode-editorWidget-border, transparent);
+}
+
+.keel-project-lead-aggregate-chip .codicon {
+	font-size: 12px;
+	line-height: 1;
+}
+
+.keel-project-lead-aggregate-active {
+	color: var(--vscode-charts-blue, var(--vscode-foreground));
+}
+
+.keel-project-lead-aggregate-waiting {
+	color: var(
+		--vscode-editorWarning-foreground,
+		var(--vscode-inputValidation-warningBorder, #d18616)
+	);
+	border-color: var(
+		--vscode-editorWarning-foreground,
+		var(--vscode-inputValidation-warningBorder, #d18616)
+	);
+}
+
+/* Idle: ruhiger Ring, kein Akzent. */
+.keel-project-lead-card-idle .keel-project-lead-icon-wrap {
+	border-color: var(--vscode-editorWidget-border, rgba(127, 127, 127, 0.3));
+}
+
+/* Active: Akzent-Ring, sanfte Puls-Animation. */
+.keel-project-lead-card-active .keel-project-lead-icon-wrap {
+	border-color: var(--vscode-focusBorder, var(--vscode-charts-blue, #0078d4));
+	animation: keel-project-lead-pulse 2400ms ease-in-out infinite;
+}
+
+/* Waiting: warmer Akzent-Ring, kein Puls. */
+.keel-project-lead-card-waiting {
+	border-color: var(
+		--vscode-editorWarning-foreground,
+		var(--vscode-inputValidation-warningBorder, #d18616)
+	);
+}
+
+.keel-project-lead-card-waiting .keel-project-lead-icon-wrap {
+	border-color: var(
+		--vscode-editorWarning-foreground,
+		var(--vscode-inputValidation-warningBorder, #d18616)
+	);
+	background-color: rgba(209, 134, 22, 0.08);
+}
+
+@keyframes keel-project-lead-pulse {
+	0%, 100% {
+		box-shadow: 0 0 0 0 rgba(0, 120, 212, 0.0);
+	}
+	50% {
+		box-shadow: 0 0 0 6px rgba(0, 120, 212, 0.18);
+	}
+}
+
+/* --- Sub-Task-Zone (Welle 9) --- */
+
+.keel-subtask-zone {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	width: 100%;
+	margin-top: 16px;
+}
+
+.keel-subtask-zone-label-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-left: 12px;
+}
+
+.keel-subtask-zone-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	background-color: rgba(127, 127, 127, 0.1);
+	border: 1px solid var(--vscode-editorWidget-border, transparent);
+	border-radius: 999px;
+	font-size: 0.8rem;
+	font-weight: 500;
+	opacity: 0.85;
+	flex-shrink: 0;
+}
+
+.keel-subtask-zone-chip-icon.codicon {
+	font-size: 12px;
+	line-height: 1;
+}
+
+.keel-subtask-zone-chip-label {
+	letter-spacing: 0.02em;
+}
+
+.keel-subtask-zone-divider {
+	flex: 1;
+	height: 1px;
+	background-color: var(--vscode-editorWidget-border, rgba(127, 127, 127, 0.25));
+}
+
+.keel-subtask-zone-body {
+	padding-left: 12px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* --- Alter Header (Welle 8): bleibt als Fallback-Klasse fuer den Queue-Badge. --- */
 
 .keel-cockpit-header {
 	display: flex;
@@ -261,6 +600,28 @@
 		transform 220ms ease,
 		box-shadow 220ms ease,
 		border-color 220ms ease;
+}
+
+/*
+ * Delegations-Animation (Welle 9 Marketing-Must):
+ * Neu gemountete Sub-Karten fahren aus der Projektleiter-Karte heraus
+ * (translateY + Fade). Ohne `-active` startet die Karte unsichtbar und
+ * versetzt; mit `-active` landet sie in ihrer Ziel-Position.
+ * Dauer 500ms, Stagger wird via inline `transitionDelay` gesteuert.
+ */
+.keel-cockpit-card-delegating {
+	opacity: 0;
+	transform: translateY(-24px);
+	transition:
+		opacity 500ms ease-out,
+		transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1),
+		box-shadow 220ms ease,
+		border-color 220ms ease;
+}
+
+.keel-cockpit-card-delegating.keel-cockpit-card-delegating-active {
+	opacity: 1;
+	transform: translateY(0);
 }
 
 /* USP-Moment: waiting-for-review Karte wird groesser und wirft Schatten. */
@@ -870,5 +1231,25 @@
 	.keel-cockpit-card-icon-spinning,
 	.keel-cockpit-card-icon-pulsing {
 		animation: none;
+	}
+
+	/*
+	 * Welle 9: Projektleiter-Puls und Delegations-Animation abschalten. Neue
+	 * Karten erscheinen sofort vollstaendig sichtbar - die Hierarchie bleibt
+	 * ueber Groesse/Position/Chip weiterhin klar lesbar.
+	 */
+	.keel-project-lead-card-active .keel-project-lead-icon-wrap {
+		animation: none;
+	}
+
+	.keel-project-lead-card,
+	.keel-project-lead-icon-wrap {
+		transition: none;
+	}
+
+	.keel-cockpit-card-delegating {
+		opacity: 1;
+		transform: none;
+		transition: none;
 	}
 }

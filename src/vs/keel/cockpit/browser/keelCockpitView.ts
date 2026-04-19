@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { $, append, addDisposableListener, EventType, clearNode } from '../../../base/browser/dom.js';
+import { $, append, addDisposableListener, EventType, clearNode, getWindow } from '../../../base/browser/dom.js';
 import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
 import { KeyCode } from '../../../base/common/keyCodes.js';
 import { StandardKeyboardEvent } from '../../../base/browser/keyboardEvent.js';
@@ -13,6 +13,8 @@ import {
 	KEEL_COCKPIT_MAX_ACTIVE_TASKS,
 } from '../common/keelCockpit.js';
 import { IKeelCockpitService } from './keelCockpitService.js';
+import { IKeelProjectService } from './keelProjectService.js';
+import { IKeelProjectLeadService, IProjectLeadStatus } from './keelProjectLeadService.js';
 import { keelCockpitStrings } from './strings/keelCockpitStrings.js';
 
 /**
@@ -23,6 +25,8 @@ export interface IKeelCockpitViewHandlers {
 	readonly onNewTask: (prompt: string) => void;
 	/** Informations-Toast an den NotificationService delegieren. */
 	readonly onNotify: (message: string) => void;
+	/** Warn-Toast an den NotificationService delegieren (Validierungs-Feedback). */
+	readonly onWarn: (message: string) => void;
 	/** Warn-Prompt mit Ja/Nein-Auswahl an den NotificationService delegieren. */
 	readonly onConfirm: (
 		message: string,
@@ -45,35 +49,62 @@ const PHASE_CODICON: Record<KeelCockpitTaskPhase, string> = {
 };
 
 /**
+ * Stagger zwischen mehreren gleichzeitig gemounteten TaskCards in ms.
+ * Marketing-Must: Sub-Karten fahren mit 80-120ms Versatz heraus.
+ */
+const DELEGATION_STAGGER_MS = 100;
+
+/**
  * DOM-Rendering-Logik fuer das Keel-Cockpit.
  *
- * Die Klasse abonniert den `IKeelCockpitService`, haelt selbst aber keinen
- * Task-State - sie re-rendert komplett bei jedem `onTasksChanged`-Event. Das
- * ist fuer die MVP-Karten-Zahl (max. 4 aktiv + Queue) ausreichend; fuer spaetere
- * Optimierung koennte ein Diff-Rendering eingefuehrt werden.
+ * Welle-9-Layout:
+ * - Projekt-Header (Projekt-Name + "Neuer Auftrag"-Button)
+ * - Projektleiter-Card (prominent, breit, mit Aggregat-Status)
+ * - Sub-Task-Zone mit Projektleiter-Chip + Divider + eingerueckten TaskCards
  *
- * Visuelle Icons werden ausschliesslich als Codicons gerendert (Spec-Vorgabe,
- * keine Emojis). Der View nutzt die CSS-Klassen-Variante
- * `<span class="codicon codicon-<id>">`.
+ * Die Klasse abonniert `IKeelCockpitService` und `IKeelProjectLeadService`;
+ * TaskCards werden komplett re-rendert bei `onTasksChanged`. Neu gemountete
+ * Sub-Karten erhalten die Delegations-Animation (translateY + opacity Fade),
+ * die `prefers-reduced-motion` respektiert.
  */
 export class KeelCockpitView extends Disposable {
 
 	private readonly viewDisposables = this._register(new DisposableStore());
 
 	private container: HTMLElement | undefined;
+	private projectHeaderTitle: HTMLElement | undefined;
+	private projectHeaderLeft: HTMLElement | undefined;
+	private projectChevronButton: HTMLButtonElement | undefined;
+	private leadStatusText: HTMLElement | undefined;
+	private leadAggregate: HTMLElement | undefined;
+	private leadCard: HTMLElement | undefined;
 	private queueBadge: HTMLElement | undefined;
 
 	/** Overlay fuer PlanReview und NewTask. Nur eins aktiv gleichzeitig. */
 	private activeOverlay: HTMLElement | undefined;
 	private activeOverlayDisposables: DisposableStore | undefined;
 
+	/**
+	 * Task-IDs, die bereits mindestens einmal mit Animation gemounted wurden.
+	 * Re-Renders derselben Task loesen die Delegations-Animation nicht erneut aus.
+	 */
+	private readonly animatedTaskIds: Set<string> = new Set();
+
 	constructor(
 		private readonly parent: HTMLElement,
 		private readonly handlers: IKeelCockpitViewHandlers,
 		private readonly cockpitService: IKeelCockpitService,
+		private readonly projectService: IKeelProjectService,
+		private readonly projectLeadService: IKeelProjectLeadService,
 	) {
 		super();
 		this._register(this.cockpitService.onTasksChanged(() => this.rerender()));
+		this._register(this.projectLeadService.onStatusChanged(status => this.updateLeadCard(status)));
+		this._register(this.projectService.onActiveProjectChanged(project => {
+			if (this.projectHeaderTitle) {
+				this.projectHeaderTitle.textContent = project.name;
+			}
+		}));
 	}
 
 	/**
@@ -82,17 +113,19 @@ export class KeelCockpitView extends Disposable {
 	render(): void {
 		this.viewDisposables.clear();
 		clearNode(this.parent);
+		this.animatedTaskIds.clear();
 
 		this.container = append(this.parent, $<HTMLDivElement>('div.keel-cockpit-container'));
 
-		this.renderHeader(this.container);
+		this.renderProjectHeader(this.container);
+		this.renderProjectLeadCard(this.container);
 		this.renderBody(this.container);
 	}
 
 	focus(): void {
-		// Fokus auf den primaeren Button, wenn Empty-State oder Header-Button.
-		// eslint-disable-next-line no-restricted-syntax -- MVP-Refactor in Welle 9
-		const cta = this.container?.querySelector<HTMLButtonElement>('.keel-cockpit-new-task-btn');
+		// Welle 9 Follow-up: Primaerer CTA lebt in der Projektleiter-Card.
+		// eslint-disable-next-line no-restricted-syntax -- MVP-DOM-Zugriff fuer Focus
+		const cta = this.container?.querySelector<HTMLButtonElement>('.keel-project-lead-new-task-btn');
 		cta?.focus();
 	}
 
@@ -104,31 +137,57 @@ export class KeelCockpitView extends Disposable {
 	// --- Rerender ---
 
 	private rerender(): void {
-		// Wenn ein Overlay gerade offen ist (PlanReview zeigt Plan einer Task,
-		// die jetzt moeglicherweise aktualisiert wurde), lassen wir es stehen -
-		// die View aktualisiert nur das Grid.
 		if (!this.container) {
 			return;
 		}
 		this.renderBody(this.container);
+		// Lead-Card wird ueber onStatusChanged aktualisiert, aber defensiv
+		// direkt nachziehen, damit Initial-Load konsistent ist.
+		this.updateLeadCard(this.projectLeadService.getStatus());
 	}
 
-	// --- Header ---
+	// --- Projekt-Header ---
 
-	private renderHeader(parent: HTMLElement): void {
-		const header = append(parent, $<HTMLDivElement>('header.keel-cockpit-header'));
+	private renderProjectHeader(parent: HTMLElement): void {
+		const header = append(parent, $<HTMLElement>('header.keel-project-header', {
+			role: 'banner',
+		}));
 
-		const left = append(header, $<HTMLDivElement>('div.keel-cockpit-header-left'));
-		append(left, $<HTMLSpanElement>('span.keel-cockpit-header-logo', {}, 'Keel'));
-		append(left, $<HTMLHeadingElement>(
-			'h1.keel-cockpit-header-title',
+		const left = append(header, $<HTMLDivElement>('div.keel-project-header-left'));
+		this.projectHeaderLeft = left;
+		append(left, $<HTMLSpanElement>(
+			'span.codicon.codicon-folder.keel-project-header-icon',
+			{ 'aria-hidden': 'true' },
+		));
+		const project = this.projectService.getActiveProject();
+		this.projectHeaderTitle = append(left, $<HTMLHeadingElement>(
+			'h1.keel-project-header-title',
 			{},
-			keelCockpitStrings.headerTitle(),
+			project.name,
 		));
 
-		const right = append(header, $<HTMLDivElement>('div.keel-cockpit-header-right'));
+		// ChevronDown-Button: oeffnet Dropdown mit Rename-Eintrag.
+		const chevronBtn = append(left, $<HTMLButtonElement>(
+			'button.keel-project-header-chevron',
+			{
+				type: 'button',
+				'aria-label': keelCockpitStrings.projectRenameAriaChevron(),
+				'aria-haspopup': 'menu',
+				'aria-expanded': 'false',
+			},
+		));
+		append(chevronBtn, $<HTMLSpanElement>(
+			'span.codicon.codicon-chevron-down',
+			{ 'aria-hidden': 'true' },
+		));
+		this.projectChevronButton = chevronBtn;
+		this.viewDisposables.add(addDisposableListener(chevronBtn, EventType.CLICK, () => {
+			this.openProjectMenu(chevronBtn);
+		}));
 
-		// QueueIndicator - nur sichtbar wenn queue.length > 0.
+		const right = append(header, $<HTMLDivElement>('div.keel-project-header-right'));
+
+		// QueueIndicator (Welle 8 - bleibt im Header, da er projekt-weit ist).
 		this.queueBadge = append(right, $<HTMLDivElement>('div.keel-cockpit-queue-badge', {
 			role: 'status',
 			title: keelCockpitStrings.queueTooltip(),
@@ -139,10 +198,228 @@ export class KeelCockpitView extends Disposable {
 			{ 'aria-hidden': 'true' },
 		));
 		append(this.queueBadge, $<HTMLSpanElement>('span.keel-cockpit-queue-text'));
+	}
 
-		const newTaskBtn = append(right, $<HTMLButtonElement>('button.keel-cockpit-new-task-btn', {
-			type: 'button',
+	// --- Projekt-Menue + Rename-Inline-Edit ---
+
+	/**
+	 * Oeffnet das Projekt-Dropdown. MVP: ein einziger Eintrag "Umbenennen".
+	 * Click-ausserhalb und Escape schliessen das Menue.
+	 */
+	private openProjectMenu(anchor: HTMLButtonElement): void {
+		// Falls bereits offen: schliessen (Toggle).
+		// eslint-disable-next-line no-restricted-syntax -- DOM-Lookup fuer bereits gerendertes Menue
+		const existing = this.container?.querySelector('.keel-project-header-menu');
+		if (existing) {
+			existing.remove();
+			anchor.setAttribute('aria-expanded', 'false');
+			return;
+		}
+		anchor.setAttribute('aria-expanded', 'true');
+
+		const menu = append(this.projectHeaderLeft!, $<HTMLDivElement>(
+			'div.keel-project-header-menu',
+			{ role: 'menu' },
+		));
+		const renameItem = append(menu, $<HTMLButtonElement>(
+			'button.keel-project-header-menu-item',
+			{
+				type: 'button',
+				role: 'menuitem',
+			},
+			keelCockpitStrings.projectRenameMenuItem(),
+		));
+
+		const closeMenu = () => {
+			menu.remove();
+			anchor.setAttribute('aria-expanded', 'false');
+		};
+
+		const disposables = new DisposableStore();
+		this.viewDisposables.add(disposables);
+
+		disposables.add(addDisposableListener(renameItem, EventType.CLICK, () => {
+			closeMenu();
+			this.startInlineRename();
 		}));
+
+		// Click ausserhalb schliesst das Menue. Wir verwenden das Window des
+		// aktuellen Host-Elements (multi-window-safe).
+		const hostWindow = getWindow(anchor);
+		disposables.add(addDisposableListener(hostWindow, EventType.MOUSE_DOWN, (e: MouseEvent) => {
+			const target = e.target as Node | null;
+			if (target && !menu.contains(target) && target !== anchor && !anchor.contains(target)) {
+				closeMenu();
+				disposables.dispose();
+			}
+		}));
+
+		// Esc schliesst Menue und gibt Fokus an Chevron zurueck.
+		disposables.add(addDisposableListener(menu, EventType.KEY_DOWN, (e: KeyboardEvent) => {
+			const evt = new StandardKeyboardEvent(e);
+			if (evt.keyCode === KeyCode.Escape) {
+				evt.preventDefault();
+				evt.stopPropagation();
+				closeMenu();
+				anchor.focus();
+				disposables.dispose();
+			}
+		}));
+
+		queueMicrotask(() => renameItem.focus());
+	}
+
+	/**
+	 * Startet den Inline-Edit-Modus: der H1-Titel wird durch ein Input-Feld
+	 * ersetzt. Enter speichert ueber `handleProjectRename`, Esc verwirft.
+	 * Nach Abschluss (save oder cancel) kehrt der Fokus auf den Chevron-Button
+	 * zurueck.
+	 */
+	private startInlineRename(): void {
+		if (!this.projectHeaderTitle || !this.projectHeaderLeft) {
+			return;
+		}
+		const project = this.projectService.getActiveProject();
+		const currentName = project.name;
+
+		const input = $<HTMLInputElement>('input.keel-project-header-rename-input', {
+			type: 'text',
+			value: currentName,
+			maxlength: '40',
+			placeholder: keelCockpitStrings.projectRenamePlaceholder(),
+			'aria-label': keelCockpitStrings.projectRenameMenuItem(),
+		});
+		this.projectHeaderTitle.replaceWith(input);
+
+		const disposables = new DisposableStore();
+		this.viewDisposables.add(disposables);
+
+		let finished = false;
+		const restoreTitle = (name: string) => {
+			const newTitle = $<HTMLHeadingElement>(
+				'h1.keel-project-header-title',
+				{},
+				name,
+			);
+			input.replaceWith(newTitle);
+			this.projectHeaderTitle = newTitle;
+			this.projectChevronButton?.focus();
+			disposables.dispose();
+		};
+
+		const commit = () => {
+			if (finished) {
+				return;
+			}
+			const raw = input.value;
+			const trimmed = raw.trim();
+			if (trimmed.length === 0) {
+				// Validation-Fail: Warn-Toast, Fokus bleibt im Input.
+				this.handlers.onWarn(keelCockpitStrings.projectRenameInvalid());
+				input.focus();
+				input.select();
+				return;
+			}
+			finished = true;
+			void this.handleProjectRename(project.id, trimmed);
+			// Optimistisches Rendering: Titel sofort auf den neuen Namen setzen.
+			// Das onActiveProjectChanged-Event aktualisiert die Referenz nochmal
+			// nach erfolgreichem Persist.
+			restoreTitle(trimmed);
+		};
+
+		const cancel = () => {
+			if (finished) {
+				return;
+			}
+			finished = true;
+			restoreTitle(currentName);
+		};
+
+		disposables.add(addDisposableListener(input, EventType.KEY_DOWN, (e: KeyboardEvent) => {
+			const evt = new StandardKeyboardEvent(e);
+			if (evt.keyCode === KeyCode.Enter) {
+				evt.preventDefault();
+				evt.stopPropagation();
+				commit();
+			} else if (evt.keyCode === KeyCode.Escape) {
+				evt.preventDefault();
+				evt.stopPropagation();
+				cancel();
+			}
+		}));
+		disposables.add(addDisposableListener(input, EventType.BLUR, () => {
+			// Blur ohne Enter verwirft, konsistent mit Dropdown-Schliessen.
+			cancel();
+		}));
+
+		queueMicrotask(() => {
+			input.focus();
+			input.select();
+		});
+	}
+
+	/**
+	 * Validiert und persistiert den neuen Projekt-Namen ueber den Service.
+	 * Der Service trimmt + kappt intern nochmals; diese Methode dient primaer
+	 * als Hook fuer zukuenftige Policies (Telemetry, Audit).
+	 */
+	private async handleProjectRename(projectId: string, newName: string): Promise<void> {
+		const trimmed = newName.trim();
+		if (trimmed.length === 0) {
+			this.handlers.onWarn(keelCockpitStrings.projectRenameInvalid());
+			return;
+		}
+		await this.projectService.renameProject(projectId, trimmed);
+	}
+
+	// --- Projektleiter-Card ---
+
+	private renderProjectLeadCard(parent: HTMLElement): void {
+		const status = this.projectLeadService.getStatus();
+
+		const card = append(parent, $<HTMLDivElement>(
+			`div.keel-project-lead-card.keel-project-lead-card-${status.state}`,
+			{
+				role: 'region',
+				'aria-label': keelCockpitStrings.projectLeadAria(
+					this.leadStatusTextFor(status),
+				),
+			},
+		));
+		this.leadCard = card;
+
+		const iconWrap = append(card, $<HTMLDivElement>('div.keel-project-lead-icon-wrap'));
+		append(iconWrap, $<HTMLSpanElement>(
+			'span.codicon.codicon-organization.keel-project-lead-icon',
+			{ 'aria-hidden': 'true' },
+		));
+
+		const mid = append(card, $<HTMLDivElement>('div.keel-project-lead-mid'));
+		append(mid, $<HTMLDivElement>(
+			'div.keel-project-lead-title',
+			{},
+			keelCockpitStrings.projectLeadTitle(),
+		));
+		this.leadStatusText = append(mid, $<HTMLDivElement>(
+			'div.keel-project-lead-status',
+			{ 'aria-live': 'polite' },
+			this.leadStatusTextFor(status),
+		));
+
+		this.leadAggregate = append(card, $<HTMLDivElement>('div.keel-project-lead-aggregate'));
+		this.renderAggregate(status);
+
+		// Primaerer CTA wandert aus dem Projekt-Header in die Projektleiter-Card
+		// (Welle 9 Follow-up): der Projektleiter nimmt den Auftrag entgegen.
+		const actions = append(card, $<HTMLDivElement>('div.keel-project-lead-actions'));
+		const newTaskBtn = append(actions, $<HTMLButtonElement>(
+			'button.keel-cockpit-new-task-btn.keel-project-lead-new-task-btn',
+			{
+				type: 'button',
+				'aria-label': keelCockpitStrings.projectHeaderNewTaskAria(),
+			},
+		));
 		append(newTaskBtn, $<HTMLSpanElement>(
 			'span.codicon.codicon-add.keel-cockpit-new-task-icon',
 			{ 'aria-hidden': 'true' },
@@ -150,12 +427,88 @@ export class KeelCockpitView extends Disposable {
 		append(newTaskBtn, $<HTMLSpanElement>(
 			'span.keel-cockpit-new-task-label',
 			{},
-			keelCockpitStrings.headerNewTask(),
+			keelCockpitStrings.projectHeaderNewTask(),
 		));
-
 		this.viewDisposables.add(addDisposableListener(newTaskBtn, EventType.CLICK, () => {
 			this.openNewTaskSheet();
 		}));
+	}
+
+	private updateLeadCard(status: IProjectLeadStatus): void {
+		if (!this.leadCard || !this.leadStatusText || !this.leadAggregate) {
+			return;
+		}
+		this.leadCard.classList.remove(
+			'keel-project-lead-card-idle',
+			'keel-project-lead-card-active',
+			'keel-project-lead-card-waiting',
+		);
+		this.leadCard.classList.add(`keel-project-lead-card-${status.state}`);
+		const statusText = this.leadStatusTextFor(status);
+		this.leadStatusText.textContent = statusText;
+		this.leadCard.setAttribute(
+			'aria-label',
+			keelCockpitStrings.projectLeadAria(statusText),
+		);
+		this.renderAggregate(status);
+	}
+
+	private renderAggregate(status: IProjectLeadStatus): void {
+		if (!this.leadAggregate) {
+			return;
+		}
+		clearNode(this.leadAggregate);
+
+		if (status.state === 'idle') {
+			return;
+		}
+
+		if (status.activeSubTaskCount > 0) {
+			const activeChip = append(this.leadAggregate, $<HTMLDivElement>(
+				'div.keel-project-lead-aggregate-chip.keel-project-lead-aggregate-active',
+			));
+			append(activeChip, $<HTMLSpanElement>(
+				'span.codicon.codicon-pulse',
+				{ 'aria-hidden': 'true' },
+			));
+			append(activeChip, $<HTMLSpanElement>(
+				'span',
+				{},
+				keelCockpitStrings.projectLeadAggregateActive(status.activeSubTaskCount),
+			));
+		}
+
+		if (status.waitingSubTaskCount > 0) {
+			const waitingChip = append(this.leadAggregate, $<HTMLDivElement>(
+				'div.keel-project-lead-aggregate-chip.keel-project-lead-aggregate-waiting',
+			));
+			append(waitingChip, $<HTMLSpanElement>(
+				'span.codicon.codicon-bell',
+				{ 'aria-hidden': 'true' },
+			));
+			append(waitingChip, $<HTMLSpanElement>(
+				'span',
+				{},
+				keelCockpitStrings.projectLeadAggregateWaiting(status.waitingSubTaskCount),
+			));
+		}
+	}
+
+	private leadStatusTextFor(status: IProjectLeadStatus): string {
+		if (status.state === 'idle') {
+			return keelCockpitStrings.projectLeadStatusIdle();
+		}
+		if (status.state === 'waiting') {
+			if (status.waitingSubTaskCount <= 1) {
+				return keelCockpitStrings.projectLeadStatusWaitingOne();
+			}
+			return keelCockpitStrings.projectLeadStatusWaitingMany(status.waitingSubTaskCount);
+		}
+		// active
+		if (status.activeSubTaskCount <= 1) {
+			return keelCockpitStrings.projectLeadStatusActiveOne();
+		}
+		return keelCockpitStrings.projectLeadStatusActiveMany(status.activeSubTaskCount);
 	}
 
 	// --- Body ---
@@ -165,8 +518,8 @@ export class KeelCockpitView extends Disposable {
 	 * komplett neu aufgebaut; der Header bleibt stehen.
 	 */
 	private renderBody(parent: HTMLElement): void {
-		// Alten Body entfernen
-		// eslint-disable-next-line no-restricted-syntax -- MVP-Refactor (dom.ts h-Builder) in Welle 9
+		// Alten Body entfernen.
+		// eslint-disable-next-line no-restricted-syntax -- DOM-Cleanup vor Neu-Aufbau
 		const oldBody = parent.querySelector('.keel-cockpit-body');
 		oldBody?.remove();
 
@@ -178,11 +531,8 @@ export class KeelCockpitView extends Disposable {
 
 		this.updateQueueBadge(queue.length);
 
-		if (activeTasks.length === 0) {
-			this.renderEmpty(body);
-		} else {
-			this.renderGrid(body, activeTasks);
-		}
+		// Sub-Task-Zone (Chip + Divider + TaskCards oder Empty-State)
+		this.renderSubTaskZone(body, activeTasks);
 	}
 
 	private updateQueueBadge(count: number): void {
@@ -194,11 +544,47 @@ export class KeelCockpitView extends Disposable {
 			return;
 		}
 		this.queueBadge.style.display = '';
-		// eslint-disable-next-line no-restricted-syntax -- MVP-Refactor in Welle 9
+		// eslint-disable-next-line no-restricted-syntax -- DOM-Zugriff fuer Text-Update
 		const textEl = this.queueBadge.querySelector<HTMLElement>('.keel-cockpit-queue-text');
 		if (textEl) {
 			textEl.textContent = keelCockpitStrings.queueIndicator(count);
 		}
+	}
+
+	// --- Sub-Task-Zone ---
+
+	private renderSubTaskZone(
+		parent: HTMLElement,
+		tasks: ReadonlyArray<IKeelCockpitTask>,
+	): void {
+		const zone = append(parent, $<HTMLDivElement>('div.keel-subtask-zone'));
+
+		// Zonen-Label: Projektleiter-Chip + Divider.
+		const labelRow = append(zone, $<HTMLDivElement>('div.keel-subtask-zone-label-row'));
+		const chip = append(labelRow, $<HTMLDivElement>('div.keel-subtask-zone-chip', {
+			'aria-label': keelCockpitStrings.subTaskZoneChipAria(),
+		}));
+		append(chip, $<HTMLSpanElement>(
+			'span.codicon.codicon-organization.keel-subtask-zone-chip-icon',
+			{ 'aria-hidden': 'true' },
+		));
+		append(chip, $<HTMLSpanElement>(
+			'span.keel-subtask-zone-chip-label',
+			{},
+			keelCockpitStrings.subTaskZoneChip(),
+		));
+		append(labelRow, $<HTMLDivElement>('div.keel-subtask-zone-divider', {
+			role: 'separator',
+			'aria-hidden': 'true',
+		}));
+
+		const zoneBody = append(zone, $<HTMLDivElement>('div.keel-subtask-zone-body'));
+
+		if (tasks.length === 0) {
+			this.renderEmpty(zoneBody);
+			return;
+		}
+		this.renderGrid(zoneBody, tasks);
 	}
 
 	// --- EmptyCockpit ---
@@ -219,24 +605,8 @@ export class KeelCockpitView extends Disposable {
 			{},
 			keelCockpitStrings.emptySubtitle(),
 		));
-
-		const cta = append(block, $<HTMLButtonElement>(
-			'button.keel-cockpit-new-task-btn.keel-cockpit-empty-cta',
-			{ type: 'button' },
-		));
-		append(cta, $<HTMLSpanElement>(
-			'span.codicon.codicon-add.keel-cockpit-new-task-icon',
-			{ 'aria-hidden': 'true' },
-		));
-		append(cta, $<HTMLSpanElement>(
-			'span.keel-cockpit-new-task-label',
-			{},
-			keelCockpitStrings.emptyCta(),
-		));
-
-		this.viewDisposables.add(addDisposableListener(cta, EventType.CLICK, () => {
-			this.openNewTaskSheet();
-		}));
+		// Welle 9: Kein Duplikat-CTA hier. Der "Neuer Auftrag"-Button lebt im
+		// Projekt-Header. Der Empty-State ist rein informativ.
 	}
 
 	// --- Grid ---
@@ -246,14 +616,45 @@ export class KeelCockpitView extends Disposable {
 			`div.keel-cockpit-grid.keel-cockpit-grid-${tasks.length}`,
 		));
 
+		// Sammle neu gemountete Karten fuer Stagger-Animation.
+		const newlyMounted: HTMLElement[] = [];
 		for (const task of tasks) {
-			this.renderTaskCard(grid, task);
+			const cardEl = this.renderTaskCard(grid, task);
+			if (!this.animatedTaskIds.has(task.id)) {
+				newlyMounted.push(cardEl);
+				this.animatedTaskIds.add(task.id);
+			}
+		}
+
+		// Delegations-Animation mit Stagger.
+		this.applyDelegationAnimation(newlyMounted);
+	}
+
+	/**
+	 * Spielt die Delegations-Animation auf frisch gemounteten TaskCards ab.
+	 * Marketing-Must: Sub-Karten fahren aus der Projektleiter-Karte heraus
+	 * (translateY + Fade), 80-120ms Stagger.
+	 *
+	 * `prefers-reduced-motion` wird ueber CSS gehandhabt - dort ist die
+	 * Transition auf `none` gesetzt, die Karten erscheinen sofort voll sichtbar.
+	 */
+	private applyDelegationAnimation(cards: ReadonlyArray<HTMLElement>): void {
+		for (let i = 0; i < cards.length; i++) {
+			const card = cards[i];
+			card.classList.add('keel-cockpit-card-delegating');
+			const delay = i * DELEGATION_STAGGER_MS;
+			// Stagger via style.transitionDelay anstelle separater CSS-Klassen.
+			card.style.transitionDelay = `${delay}ms`;
+			// Wichtig: force layout, damit der Browser den Start-State tatsaechlich
+			// rendert, bevor wir die `active`-Klasse setzen.
+			void card.offsetWidth;
+			card.classList.add('keel-cockpit-card-delegating-active');
 		}
 	}
 
 	// --- TaskCard ---
 
-	private renderTaskCard(parent: HTMLElement, task: IKeelCockpitTask): void {
+	private renderTaskCard(parent: HTMLElement, task: IKeelCockpitTask): HTMLElement {
 		const stateClass = `keel-cockpit-card-${task.status}`;
 		const card = append(parent, $<HTMLDivElement>(
 			`div.keel-cockpit-card.${stateClass}`,
@@ -267,6 +668,7 @@ export class KeelCockpitView extends Disposable {
 		this.renderCardHeader(card, task);
 		this.renderCardBody(card, task);
 		this.renderCardFooter(card, task);
+		return card;
 	}
 
 	private renderCardHeader(parent: HTMLElement, task: IKeelCockpitTask): void {
