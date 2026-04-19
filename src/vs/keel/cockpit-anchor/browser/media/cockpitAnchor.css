@@ -4,27 +4,31 @@
  *--------------------------------------------------------------------------------------------*/
 
 /*
- * Cockpit-Anker in der Activity-Bar (Welle 10).
+ * Cockpit-Anker in der Activity-Bar (Welle 10, D-025).
  *
- * Das Icon haengt direkt im `.part.activitybar .content`-Container, damit es
- * denselben Flex-Fluss erbt wie die regulaeren View-Container-Slots. Zahlen
- * und Farben folgen den Upstream-Aktivitaetsleisten-Konventionen (48px hoch,
- * 24px Icon, Akzent-Border links im aktiven Zustand).
+ * Der Anker wird vom chirurgischen Patch in `ActivityBarCompositeBar.create()`
+ * zwischen der View-Container-Liste und dem GlobalCompositeBar eingehaengt.
+ * Er erbt die Activity-Bar-Konventionen (48px hoch, 24px Icon) ueber die
+ * Upstream-CSS-Variablen `--activity-bar-width` / `--activity-bar-action-height`
+ * / `--activity-bar-icon-size`, die ActivityBarPart beim Umschalten zwischen
+ * Standard- und Kompakt-Modus aktualisiert. So skaliert der Anker automatisch
+ * mit.
  */
 
 .keel-cockpit-anchor {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 100%;
-	height: 48px;
-	min-height: 48px;
+	width: var(--activity-bar-width, 48px);
+	height: var(--activity-bar-action-height, 48px);
+	min-height: var(--activity-bar-action-height, 48px);
 	box-sizing: border-box;
 	cursor: pointer;
 	outline: none;
 	color: var(--vscode-activityBar-inactiveForeground);
 	border-left: 2px solid transparent;
 	position: relative;
+	flex: 0 0 auto;
 }
 
 .keel-cockpit-anchor:hover {
@@ -42,20 +46,6 @@
 }
 
 .keel-cockpit-anchor-icon {
-	font-size: 24px;
+	font-size: var(--activity-bar-icon-size, 24px);
 	line-height: 1;
-}
-
-/*
- * Kompakt-Layout: wenn die Activity-Bar im Kompakt-Modus laeuft, schrumpft
- * die Zeilenhoehe. Das Icon folgt der Upstream-Groesse (16px).
- */
-
-.part.activitybar.compact .keel-cockpit-anchor {
-	height: 32px;
-	min-height: 32px;
-}
-
-.part.activitybar.compact .keel-cockpit-anchor-icon {
-	font-size: 16px;
 }

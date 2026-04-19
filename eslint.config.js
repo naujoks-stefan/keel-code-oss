@@ -1715,6 +1715,7 @@ export default tseslint.config(
 						'vs/editor/contrib/*/~',
 						'vs/workbench/~',
 						'vs/workbench/services/*/~',
+						'vs/keel/*/~', // Keel-Erweiterungs-Layer darf aus Workbench-Parts heraus importiert werden (z.B. Cockpit-Anker in activitybarPart.ts, D-025)
 						'assert',
 						{
 							'when': 'test',

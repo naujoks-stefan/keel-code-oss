@@ -551,14 +551,9 @@
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-/* 3 Tasks: 2+1 - zwei obere, eine untere zentriert */
+/* 3 Tasks: 3 Spalten, gleichrangig (Welle 10, Designer Option A) */
 .keel-cockpit-grid-3 {
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.keel-cockpit-grid-3 > .keel-cockpit-card:nth-child(3) {
-	grid-column: 1 / -1;
-	justify-self: center;
-	width: calc(50% - 10px);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 /* 4 Tasks: 2x2 Grid */
@@ -571,9 +566,6 @@
 	.keel-cockpit-grid-3,
 	.keel-cockpit-grid-4 {
 		grid-template-columns: 1fr;
-	}
-	.keel-cockpit-grid-3 > .keel-cockpit-card:nth-child(3) {
-		width: 100%;
 	}
 	.keel-cockpit-grid-1 {
 		width: 100%;

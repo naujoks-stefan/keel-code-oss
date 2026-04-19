@@ -39,6 +39,10 @@ import { IExtensionService } from '../../../services/extensions/common/extension
 import { IWorkbenchEnvironmentService } from '../../../services/environment/common/environmentService.js';
 import { IViewsService } from '../../../services/views/common/viewsService.js';
 import { SwitchCompositeViewAction } from '../compositeBarActions.js';
+// Keel (D-025): Cockpit-Anker direkt unter den View-Container-Slots in der
+// Activity-Bar. Der Import laedt Klasse + CSS; die `mount`-Funktion wird
+// weiter unten innerhalb von `ActivityBarCompositeBar.create()` aufgerufen.
+import { KeelCockpitAnchor } from '../../../../keel/cockpit-anchor/browser/cockpitAnchor.contribution.js';
 
 export class ActivitybarPart extends Part {
 
@@ -389,6 +393,14 @@ export class ActivityBarCompositeBar extends PaneCompositeBar {
 
 		// View Containers action bar
 		this.compositeBarContainer = super.create(this.element);
+
+		// Keel (D-025): Cockpit-Anker direkt nach der View-Container-Liste und
+		// vor dem globalen Account/Manage-Bereich einhaengen. Dadurch landet der
+		// Anker oben unter dem letzten Workbench-View-Icon und erbt den Slot
+		// inklusive Groesse (48px) und Flex-Fluss. Disposable wird am
+		// CompositeBar-Lifecycle registriert, damit Kompakt-Toggle den Anker
+		// sauber aufraeumt.
+		this._register(KeelCockpitAnchor.mount(this.instantiationService, this.element));
 
 		// Global action bar
 		if (this.globalCompositeBar) {
