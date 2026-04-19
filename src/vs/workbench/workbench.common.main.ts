@@ -395,6 +395,12 @@ import '../keel/cockpit/browser/keelCockpit.contribution.js';
 // ausgeloest werden. Echter Keel-Chat folgt spaeter ueber @keel/core.
 import '../keel/chat-stub/browser/keelChatStub.contribution.js';
 
+// Keel Cockpit-Anker (D-023, Welle 10) — permanentes Icon in der Activity-Bar,
+// das Otto zurueck zum Cockpit-Editor fuehrt. Laeuft als AfterRestored-Contribution
+// und mountet sich in den `.part.activitybar .content`-Container. Nutzt den
+// existierenden KEEL_COCKPIT_SHOW_COMMAND_ID, keine neue Command-Definition.
+import '../keel/cockpit-anchor/browser/cockpitAnchor.contribution.js';
+
 // Welcome Onboarding
 import './contrib/welcomeOnboarding/browser/welcomeOnboarding.contribution.js';
 
