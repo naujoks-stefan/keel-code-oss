@@ -1,0 +1,61 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/*
+ * Cockpit-Anker in der Activity-Bar (Welle 10).
+ *
+ * Das Icon haengt direkt im `.part.activitybar .content`-Container, damit es
+ * denselben Flex-Fluss erbt wie die regulaeren View-Container-Slots. Zahlen
+ * und Farben folgen den Upstream-Aktivitaetsleisten-Konventionen (48px hoch,
+ * 24px Icon, Akzent-Border links im aktiven Zustand).
+ */
+
+.keel-cockpit-anchor {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 48px;
+	min-height: 48px;
+	box-sizing: border-box;
+	cursor: pointer;
+	outline: none;
+	color: var(--vscode-activityBar-inactiveForeground);
+	border-left: 2px solid transparent;
+	position: relative;
+}
+
+.keel-cockpit-anchor:hover {
+	color: var(--vscode-activityBar-foreground);
+}
+
+.keel-cockpit-anchor:focus-visible {
+	border-left-color: var(--vscode-focusBorder);
+}
+
+.keel-cockpit-anchor.keel-cockpit-anchor-active {
+	color: var(--vscode-activityBar-foreground);
+	border-left-color: var(--vscode-activityBar-activeBorder);
+	background-color: var(--vscode-activityBar-activeBackground);
+}
+
+.keel-cockpit-anchor-icon {
+	font-size: 24px;
+	line-height: 1;
+}
+
+/*
+ * Kompakt-Layout: wenn die Activity-Bar im Kompakt-Modus laeuft, schrumpft
+ * die Zeilenhoehe. Das Icon folgt der Upstream-Groesse (16px).
+ */
+
+.part.activitybar.compact .keel-cockpit-anchor {
+	height: 32px;
+	min-height: 32px;
+}
+
+.part.activitybar.compact .keel-cockpit-anchor-icon {
+	font-size: 16px;
+}
