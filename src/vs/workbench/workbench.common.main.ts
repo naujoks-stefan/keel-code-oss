@@ -211,11 +211,15 @@ import './contrib/notebook/browser/notebook.contribution.js';
 import './contrib/speech/browser/speech.contribution.js';
 
 // Chat
-import './contrib/chat/browser/chat.contribution.js';
+// VSCode-Chat — DISABLED by Keel (D-013): Keel baut eigenen Claude-basierten Chat,
+// kein VSCode/Copilot-Chat-UI. Services die Chat-Dependencies haben (z.B. chatAgentTools)
+// werden bei Bedarf eigenstaendig geloest oder gestubbt.
+// import './contrib/chat/browser/chat.contribution.js';
 import './contrib/inlineChat/browser/inlineChat.contribution.js';
 import './contrib/mcp/browser/mcp.contribution.js';
-import './contrib/chat/browser/chatSessions/chatSessions.contribution.js';
-import './contrib/chat/browser/contextContrib/chatContext.contribution.js';
+// VSCode-Chat Sessions + Context — DISABLED by Keel (D-013).
+// import './contrib/chat/browser/chatSessions/chatSessions.contribution.js';
+// import './contrib/chat/browser/contextContrib/chatContext.contribution.js';
 import './contrib/imageCarousel/browser/imageCarousel.contribution.js';
 
 // Interactive
@@ -369,11 +373,17 @@ import './contrib/surveys/browser/nps.contribution.js';
 import './contrib/surveys/browser/languageSurveys.contribution.js';
 
 // Welcome
-import './contrib/welcomeGettingStarted/browser/gettingStarted.contribution.js';
+// VSCode-Welcome (Getting-Started) — DISABLED by Keel (D-012): Keel baut eigenes
+// Otto-Welcome unter src/vs/keel/welcome/. Spec wird vom Designer-Agent erarbeitet.
+// import './contrib/welcomeGettingStarted/browser/gettingStarted.contribution.js';
 import './contrib/welcomeAgentSessions/browser/agentSessionsWelcome.contribution.js';
-import './contrib/welcomeWalkthrough/browser/walkThrough.contribution.js';
+// VSCode-Walkthrough — DISABLED by Keel (D-012).
+// import './contrib/welcomeWalkthrough/browser/walkThrough.contribution.js';
 import './contrib/welcomeViews/common/viewsWelcome.contribution.js';
 import './contrib/welcomeViews/common/newFile.contribution.js';
+
+// Keel Welcome (D-014) — Otto-UX-Welcome, ersetzt Standard-Welcome funktional.
+import '../keel/welcome/browser/keelWelcome.contribution.js';
 
 // Welcome Onboarding
 import './contrib/welcomeOnboarding/browser/welcomeOnboarding.contribution.js';

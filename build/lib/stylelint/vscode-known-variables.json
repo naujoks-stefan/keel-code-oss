@@ -988,6 +988,8 @@
 		"--vscode-hover-whiteSpace",
 		"--vscode-editor-dictation-widget-height",
 		"--vscode-editor-dictation-widget-width",
+		"--vscode-font-family",
+		"--vscode-font-size",
 		"--vscode-interactive-session-foreground",
 		"--vscode-interactive-result-editor-background-color",
 		"--vscode-repl-font-family",

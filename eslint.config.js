@@ -1911,7 +1911,24 @@ export default tseslint.config(
 						'vs/workbench/services/*/~',
 						'vs/workbench/contrib/*/~',
 						'vs/workbench/contrib/terminal/terminal.all.js',
-						'vs/sessions/common/theme.js' // side-effect import for color registry
+						'vs/sessions/common/theme.js', // side-effect import for color registry
+						'vs/keel/*/~' // Keel-Erweiterungen (z.B. keel/welcome/browser/~) als Side-Effect-Import
+					]
+				},
+				{
+					// Keel-Erweiterungs-Layer: lebt parallel zu workbench/contrib unter src/vs/keel/
+					// und darf die gleichen Abhaengigkeiten nutzen wie ein workbench-contrib-Modul.
+					'target': 'src/vs/keel/*/~',
+					'restrictions': [
+						'vs/base/~',
+						'vs/base/parts/*/~',
+						'vs/platform/*/~',
+						'vs/editor/~',
+						'vs/editor/contrib/*/~',
+						'vs/workbench/~',
+						'vs/workbench/services/*/~',
+						'vs/workbench/contrib/*/~',
+						'vs/keel/*/~'
 					]
 				},
 				{
