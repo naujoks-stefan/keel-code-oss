@@ -28,6 +28,16 @@ export const keelWelcomeStrings = {
 	promptAriaLabel: (): string => localize('keel.welcome.prompt.ariaLabel', "Auftrag beschreiben"),
 	emptyShake: (): string => localize('keel.welcome.empty.shake', "Bitte beschreibe zuerst deinen Auftrag."),
 
+	/**
+	 * Welle-12 (D-029): Lead-Ref-Block zwischen Subtitle und Prompt-Eingabe.
+	 * Erscheint beim Erststart, verschwindet nach dem ersten erfolgreichen
+	 * Submit (Flag `keel.welcome.leadIntroSeen`).
+	 */
+	// allow-any-unicode-next-line
+	leadIntroLine1: (): string => localize('keel.welcome.leadIntro.line1', "Das ist dein Keel-Koordinator."),
+	// allow-any-unicode-next-line
+	leadIntroLine2: (): string => localize('keel.welcome.leadIntro.line2', "Er plant, delegiert und haelt den Ueberblick — du entscheidest, was losgeht."),
+
 	examplesLabel: (): string => localize('keel.welcome.examples.label', "Oder starte mit einem Beispiel:"),
 
 	example1Title: (): string => localize('keel.welcome.example1.title', "Monatsbericht schreiben"),
@@ -45,7 +55,10 @@ export const keelWelcomeStrings = {
 	example4Title: (): string => localize('keel.welcome.example4.title', "Meeting vorbereiten"),
 	example4Subtitle: (): string => localize('keel.welcome.example4.subtitle', "Agenda, Stichworte, Fragen aus den letzten Protokollen."),
 
-	example5Title: (): string => localize('keel.welcome.example5.title', "Wettbewerbs-Scan"),
+	// Welle-12 (D-029): Card 5 von "Wettbewerbs-Scan" auf "Wettbewerbsanalyse"
+	// umbenannt (final-decisions: Wettbewerbsanalyse ist der neutrale DACH-
+	// Business-Begriff und passt zu Otto-Sprache).
+	example5Title: (): string => localize('keel.welcome.example5.title', "Wettbewerbsanalyse"),
 	// allow-any-unicode-next-line
 	example5Subtitle: (): string => localize('keel.welcome.example5.subtitle', "Was machen die drei größten Mitbewerber gerade?"),
 

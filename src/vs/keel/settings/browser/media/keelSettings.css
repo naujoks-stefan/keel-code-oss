@@ -201,6 +201,33 @@
 }
 
 /*
+ * Reauth-Banner (Welle 12, D-032) — wird im Assistant-Item angezeigt,
+ * wenn Otto nicht angemeldet ist. Dezenter Warn-Hinweis mit Icon links.
+ */
+.keel-settings-reauth-banner {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	margin-top: 6px;
+	background-color: var(--vscode-inputValidation-warningBackground, rgba(255, 204, 0, 0.12));
+	border: 1px solid var(--vscode-inputValidation-warningBorder, rgba(255, 204, 0, 0.5));
+	border-radius: 4px;
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+.keel-settings-reauth-icon.codicon {
+	font-size: 14px;
+	color: var(--vscode-inputValidation-warningForeground, var(--vscode-foreground));
+	flex-shrink: 0;
+}
+
+.keel-settings-reauth-text {
+	flex: 1;
+}
+
+/*
  * Radio-Group (Helligkeit)
  */
 .keel-settings-radio-group {

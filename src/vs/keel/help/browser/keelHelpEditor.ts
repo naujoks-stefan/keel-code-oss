@@ -15,8 +15,10 @@ import { IStorageService } from '../../../platform/storage/common/storage.js';
 import { ITelemetryService } from '../../../platform/telemetry/common/telemetry.js';
 import { IThemeService } from '../../../platform/theme/common/themeService.js';
 import { KEEL_COCKPIT_SHOW_COMMAND_ID } from '../../cockpit/common/keelCockpit.js';
+import { IKeelSettingsService } from '../../settings/browser/keelSettingsService.js';
 import { KeelHelpInput } from './keelHelpInput.js';
 import { KeelHelpView } from './keelHelpView.js';
+import { keelHelpStrings } from './strings/keelHelpStrings.js';
 import { KEEL_HELP_EDITOR_ID } from '../common/keelHelp.js';
 
 /**
@@ -44,6 +46,7 @@ export class KeelHelpEditor extends EditorPane {
 		@IStorageService storageService: IStorageService,
 		@ICommandService private readonly commandService: ICommandService,
 		@IOpenerService private readonly openerService: IOpenerService,
+		@IKeelSettingsService private readonly settingsService: IKeelSettingsService,
 	) {
 		super(KeelHelpEditor.ID, group, telemetryService, themeService, storageService);
 	}
@@ -54,6 +57,11 @@ export class KeelHelpEditor extends EditorPane {
 
 	override async setInput(input: KeelHelpInput, options: unknown, context: IEditorOpenContext, token: CancellationToken): Promise<void> {
 		await super.setInput(input, undefined, context, token);
+
+		// Settings-Service initialisieren, damit `dataLocationUri` in der View
+		// mit dem echten Ordner-Pfad gerendert wird. `initialize()` ist
+		// idempotent — wiederholtes Aufrufen ist guenstig.
+		await this.settingsService.initialize();
 
 		if (token.isCancellationRequested || !this.rootElement) {
 			return;
@@ -96,6 +104,9 @@ export class KeelHelpEditor extends EditorPane {
 		const view = new KeelHelpView(this.rootElement, {
 			onOpenCockpit: () => this.handleOpenCockpit(),
 			onOpenEmail: (mailto: URI) => this.handleOpenEmail(mailto),
+		}, {
+			dataLocation: this.settingsService.dataLocationUri.fsPath,
+			contactEmail: keelHelpStrings.contactEmail(),
 		});
 		view.render();
 		this.view = view;

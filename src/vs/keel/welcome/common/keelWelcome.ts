@@ -33,6 +33,18 @@ export const KEEL_WELCOME_SHOW_COMMAND_ID = 'keel.welcome.show';
 export const KEEL_WELCOME_SHOWN_STORAGE_KEY = 'keel.welcome.shown';
 
 /**
+ * Storage-Key fuer das Lead-Intro-Flag (Welle 12, D-029).
+ *
+ * Der Lead-Intro-Block ("Das ist dein Keel-Koordinator.") erscheint beim
+ * Erststart zwischen Subtitle und Prompt-Eingabe und verschwindet nach dem
+ * ersten erfolgreichen Submit — damit bleibt das Welcome "einmal lehrreich,
+ * dann weg" (Otto-UX-Prinzip).
+ *
+ * Scope: `StorageScope.APPLICATION` (geraet-weit, Profil-unabhaengig).
+ */
+export const KEEL_WELCOME_LEAD_INTRO_SEEN_STORAGE_KEY = 'keel.welcome.leadIntroSeen';
+
+/**
  * Konfigurations-Key (Einstellungen - Allgemein) fuer den Opt-in, das Welcome beim
  * naechsten Start wieder zu zeigen.
  */

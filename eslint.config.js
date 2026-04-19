@@ -1749,6 +1749,7 @@ export default tseslint.config(
 						'vs/editor/contrib/*/~',
 						'vs/workbench/~',
 						'vs/workbench/services/*/~',
+						'vs/keel/*/~', // Keel-Erweiterungs-Layer (D-033: commandService.ts importiert IKeelCommandBlacklistService-Decorator aus vs/keel/commandGuard/common/)
 						{
 							'when': 'test',
 							'pattern': 'vs/workbench/contrib/*/~'

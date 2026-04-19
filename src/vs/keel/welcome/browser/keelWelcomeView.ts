@@ -25,6 +25,14 @@ export interface IKeelWelcomeViewHandlers {
 export interface IKeelWelcomeViewOptions {
 	/** Steuert Autofokus: beim First-Run `true`, beim manuellen Oeffnen `false`. */
 	readonly autoFocusInput: boolean;
+
+	/**
+	 * Welle-12 (D-029): Zeigt den Lead-Ref-Block zwischen Subtitle und
+	 * Prompt-Eingabe. Der Caller entscheidet anhand des Storage-Flags
+	 * `keel.welcome.leadIntroSeen`, ob der Block noch angezeigt wird. Nach
+	 * dem ersten Submit wird das Flag gesetzt und der Block verschwindet.
+	 */
+	readonly showLeadIntro: boolean;
 }
 
 /**
@@ -69,6 +77,9 @@ export class KeelWelcomeView extends Disposable {
 		const inner = append(container, $<HTMLDivElement>('div.keel-welcome-inner'));
 
 		this.renderHeadline(inner);
+		if (this.options.showLeadIntro) {
+			this.renderLeadIntro(inner);
+		}
 		this.renderPromptInput(inner);
 		this.renderExamples(inner);
 		this.renderDivider(inner);
@@ -101,6 +112,25 @@ export class KeelWelcomeView extends Disposable {
 		const block = append(parent, $<HTMLDivElement>('div.keel-welcome-headline'));
 		append(block, $<HTMLHeadingElement>('h1.keel-welcome-h1', {}, keelWelcomeStrings.headline()));
 		append(block, $<HTMLParagraphElement>('p.keel-welcome-subtitle', {}, keelWelcomeStrings.subtitle()));
+	}
+
+	/**
+	 * Welle-12 (D-029): Lead-Ref-Block zwischen Subtitle und Prompt-Eingabe.
+	 * Zwei kurze Saetze, die Otto auf den Keel-Koordinator einstimmen. Nach
+	 * dem ersten Submit setzt der EditorPane das Flag `keel.welcome.
+	 * leadIntroSeen` und der Block wird beim naechsten Render nicht mehr
+	 * gezeigt.
+	 *
+	 * Semantisch ist der Block ein `note`-Region, damit Screen-Reader ihn
+	 * als zusammenhaengenden Hinweis wiedergeben.
+	 */
+	private renderLeadIntro(parent: HTMLElement): void {
+		const block = append(parent, $<HTMLDivElement>('div.keel-welcome-lead-intro', {
+			role: 'note',
+			'data-keel-welcome-lead-intro': 'true',
+		}));
+		append(block, $<HTMLParagraphElement>('p.keel-welcome-lead-intro-line1', {}, keelWelcomeStrings.leadIntroLine1()));
+		append(block, $<HTMLParagraphElement>('p.keel-welcome-lead-intro-line2', {}, keelWelcomeStrings.leadIntroLine2()));
 	}
 
 	private renderPromptInput(parent: HTMLElement): void {

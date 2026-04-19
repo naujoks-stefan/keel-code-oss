@@ -81,4 +81,42 @@ export const keelHelpStrings = {
 		localize('keel.platform.start.retry', "Erneut versuchen"),
 	toastStage2Help: (): string =>
 		localize('keel.platform.start.help', "Hilfe"),
+
+	// --- FAQ-Accordion (Welle 12, D-031) ---
+	faqHeader: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.help.faq.header', "Haeufige Fragen"),
+	faqReportsQuestion: (): string =>
+		localize('keel.help.faq.reports.question', "Wo finde ich meine Reports?"),
+	faqReportsAnswer: (dataLocation: string): string =>
+		// allow-any-unicode-next-line
+		localize('keel.help.faq.reports.answer', "Alle Auftraege werden automatisch gespeichert. Du findest sie im Cockpit unter 'Abgeschlossen' — oder direkt im Ordner {0}.", dataLocation),
+	faqCockpitEmptyQuestion: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.help.faq.cockpitEmpty.question', "Warum ist mein Cockpit leer?"),
+	faqCockpitEmptyAnswer: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.help.faq.cockpitEmpty.answer', "Beim ersten Start hast du noch keine Auftraege. Beschreibe einfach deinen ersten Auftrag oben — Keel nimmt ihn entgegen und bearbeitet ihn."),
+	faqSlowQuestion: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.help.faq.slow.question', "Warum ist Keel langsam?"),
+	faqSlowAnswer: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.help.faq.slow.answer', "Keel startet mit allen Diensten. Wenn das beim ersten Mal laenger dauert, ist das normal. Dauerhaft langsam? Dann schreib uns."),
+	faqBugQuestion: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.help.faq.bug.question', "Wie melde ich einen Fehler?"),
+	faqBugAnswer: (email: string): string =>
+		// allow-any-unicode-next-line
+		localize('keel.help.faq.bug.answer', "Schreib uns eine Mail an {0} mit kurzer Beschreibung, was du gemacht hast und was nicht funktionierte. Wir antworten meist am gleichen Werktag.", email),
+	faqDataQuestion: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.help.faq.data.question', "Wo liegen meine Daten?"),
+	faqDataAnswer: (dataLocation: string): string =>
+		// allow-any-unicode-next-line
+		localize('keel.help.faq.data.answer', "Alles, was du mit Keel arbeitest, bleibt lokal auf deinem Rechner im Ordner {0}. Wir uebertragen keine Inhalte deiner Auftraege an unsere Server.", dataLocation),
+
+	faqItemAriaLabel: (question: string): string =>
+		// allow-any-unicode-next-line
+		localize('keel.help.faq.item.aria', "Frage: {0}. Enter zum Oeffnen oder Schliessen.", question),
 };
