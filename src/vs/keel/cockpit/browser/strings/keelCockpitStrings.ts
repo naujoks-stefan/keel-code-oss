@@ -48,37 +48,38 @@ export const keelCockpitStrings = {
 	projectRenamePlaceholder: (): string =>
 		localize('keel.project.rename.placeholder', "Projekt-Name..."),
 
-	// --- Projektleiter-Card (Welle 9) ---
-	projectLeadTitle: (): string => localize('keel.project.coordinator.title', "Projektleiter"),
+	// --- Keel-Koordinator-Card (Welle 10: Rebrand von "Projektleiter" zu
+	// "Keel-Koordinator", Status-Strings in Ich-Form. Storage-Key-Namespace
+	// `keel.project.coordinator.*` bleibt technisch erhalten, damit bestehende
+	// Tests und Editor-States weiter funktionieren.) ---
+	projectLeadTitle: (): string => localize('keel.project.coordinator.title', "Keel-Koordinator"),
 	projectLeadAria: (statusText: string): string =>
 		// allow-any-unicode-next-line
-		localize('keel.project.coordinator.aria', "Projektleiter, {0}", statusText),
+		localize('keel.project.coordinator.aria', "Keel-Koordinator, {0}", statusText),
 	projectLeadStatusIdle: (): string =>
 		// allow-any-unicode-next-line
-		localize('keel.project.coordinator.status.idle', "Bereit fuer deinen ersten Auftrag"),
+		localize('keel.project.coordinator.status.idle', "Ich bin bereit fuer deine Auftraege"),
 	projectLeadStatusActiveOne: (): string =>
-		// allow-any-unicode-next-line
-		localize('keel.project.coordinator.status.active.one', "Koordiniert 1 Auftrag fuer dich"),
+		localize('keel.project.coordinator.status.active.one', "Ich bearbeite gerade 1 Auftrag"),
 	projectLeadStatusActiveMany: (count: number): string =>
 		// allow-any-unicode-next-line
-		localize('keel.project.coordinator.status.active.many', "Koordiniert {0} Auftraege fuer dich", String(count)),
+		localize('keel.project.coordinator.status.active.many', "Ich arbeite an {0} Auftraegen", String(count)),
 	projectLeadStatusWaitingOne: (): string =>
-		// allow-any-unicode-next-line
-		localize('keel.project.coordinator.status.waiting.one', "Wartet auf deine Freigabe bei 1 Auftrag"),
+		localize('keel.project.coordinator.status.waiting.one', "Ich warte auf deine Freigabe bei 1 Auftrag"),
 	projectLeadStatusWaitingMany: (count: number): string =>
 		// allow-any-unicode-next-line
-		localize('keel.project.coordinator.status.waiting.many', "Wartet auf deine Freigabe bei {0} Auftraegen", String(count)),
+		localize('keel.project.coordinator.status.waiting.many', "Ich warte auf deine Freigaben bei {0} Auftraegen", String(count)),
 	projectLeadAggregateActive: (count: number): string =>
 		localize('keel.project.coordinator.aggregate.active', "{0} aktiv", String(count)),
 	projectLeadAggregateWaiting: (count: number): string =>
 		// allow-any-unicode-next-line
 		localize('keel.project.coordinator.aggregate.waiting', "{0} wartet", String(count)),
 
-	// --- Sub-Task-Zone (Welle 9) ---
+	// --- Sub-Task-Zone (Welle 9, Welle 10: Aria-Label umgelabelt) ---
 	subTaskZoneChip: (): string => localize('keel.project.subtaskZone.chip', "Auftraege"),
 	subTaskZoneChipAria: (): string =>
 		// allow-any-unicode-next-line
-		localize('keel.project.subtaskZone.chip.aria', "Auftraege vom Projektleiter"),
+		localize('keel.project.subtaskZone.chip.aria', "Auftraege vom Keel-Koordinator"),
 
 	// --- Queue-Indicator ---
 	// allow-any-unicode-next-line
@@ -240,4 +241,25 @@ export const keelCockpitStrings = {
 		localize('keel.cockpit.container.ariaLabel', "Keel Cockpit"),
 	// allow-any-unicode-next-line
 	showCommandTitle: (): string => localize('keel.cockpit.command.show', "Cockpit öffnen"),
+
+	// --- Activity-Bar-Anchor (Welle 10) ---
+	// Tooltip ist kurz, Aria-Label traegt den Keel-Koordinator-Kontext fuer
+	// Screen-Reader. Der Anchor ist permanent sichtbar und fuehrt Otto zurueck
+	// zum Cockpit-Editor, egal an welcher Stelle er sich verlaufen hat.
+	activitybarCockpitTooltip: (): string =>
+		localize('keel.activitybar.cockpit.tooltip', "Cockpit"),
+	activitybarCockpitAria: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.activitybar.cockpit.aria', "Cockpit oeffnen — dein Keel-Koordinator"),
+	activitybarCockpitLabel: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.activitybar.cockpit.label', "Cockpit oeffnen"),
+
+	// --- Plattform-Start-Fallback-Toasts (Welle 10) ---
+	// Stufe 1 loest aus, wenn der Plattform-Start ungewoehnlich lange braucht
+	// (>10s) — ersetzt den suppressten Dev-Jargon-Toast aus dem Extension-Host.
+	// Stufe 2 (in spaeteren Wellen) zeigt Neu-versuchen + Hilfe-Buttons.
+	platformStartSlow: (): string =>
+		// allow-any-unicode-next-line
+		localize('keel.platform.start.slow', "Keel startet langsamer als gewoehnlich. Einen Moment, bitte."),
 };

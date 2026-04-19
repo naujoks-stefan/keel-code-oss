@@ -1,4 +1,5 @@
 {
+	"keelSilenceExtensionHostToasts": true,
 	"nameShort": "Keel",
 	"nameLong": "Keel — The AI Cockpit",
 	"applicationName": "keel",

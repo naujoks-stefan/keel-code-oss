@@ -1,0 +1,126 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/*
+ * Cockpit-Anker in der Activity-Bar (Welle 10, D-025).
+ *
+ * Iteration 3 bettet den Anker in die exakte Upstream-DOM-Struktur eines
+ * Activity-Bar-Action-Items ein (`.monaco-action-bar.vertical >
+ * ul.actions-container > li.action-item.icon > a.action-label.codicon`).
+ * Dadurch uebernehmen alle bestehenden Upstream-Regeln aus
+ * `activityaction.css` das Sizing:
+ *
+ * - `.action-label { width: var(--activity-bar-width, 48px); height:
+ *   var(--activity-bar-action-height, 48px); }` -> Slot-Dimensionen
+ *   identisch zu Marketplace.
+ * - `.action-label.codicon { font-size: var(--activity-bar-icon-size,
+ *   24px); }` -> Icon-Groesse identisch zu Marketplace (24 px, im
+ *   Kompakt-Modus 16 px).
+ * - `.action-item.checked .active-item-indicator:before { border-left:
+ *   2px solid; border-left-color: <theme color>; }` -> Akzent-Border
+ *   identisch zu Marketplace.
+ *
+ * --- Iteration 5 (2026-04-19, Welle-10-Hotfix): Wurzel-Fix via :has() ---
+ *
+ * Iteration 4 versuchte, einen 48-px-Gap zwischen Marketplace und Cockpit-
+ * Anker ueber `margin-top: calc(-1 * var(--activity-bar-action-height))`
+ * auf dem `.keel-cockpit-anchor-bar`-Wrapper zu schliessen. Das Pflaster
+ * versagte: statt den Anker unter Marketplace zu ziehen, kollabierte die
+ * gesamte zirkulaere height-Kette (Composite-Bar misst sich am Inhalt —
+ * der Inhalt schrumpft durch das negative Margin — die `height: 100%`-
+ * Regel der ersten Action-Bar zieht diese mit — Ergebnis: Marketplace und
+ * Cockpit landen beide bei y=35, visuell uebereinander gestapelt).
+ *
+ * Wurzel der Pathologie: Die Upstream-Regel
+ *   `.monaco-action-bar { height: 100% }`
+ * in `base/browser/ui/actionbar/actionbar.css` greift auf JEDE Action-Bar
+ * in der Activity-Bar-Composite-Bar. Bei genau EINEM Kind (Upstream-
+ * Standardfall) harmlos. Bei ZWEI Kindern (Marketplace + Cockpit-Anker)
+ * fuellt die erste Bar die volle Composite-Bar-Hoehe (96 px) — und der
+ * Cockpit-Anker reiht sich darunter ein, mit 48 px Luft.
+ *
+ * Sauberer Fix: die zirkulaere Kette am ersten Action-Bar-Wrapper
+ * chirurgisch unterbrechen, AUSSCHLIESSLICH im Kontext der Keel-Cockpit-
+ * Anchor-Bar. `:has()` macht das moeglich: wir selektieren nur die
+ * ViewContainer-Bar (das erste `.monaco-action-bar.vertical`-Geschwister),
+ * DIE in einer Composite-Bar sitzt, die einen Cockpit-Anker enthaelt —
+ * und zwingen sie auf `height: auto`. Damit kollabiert sie auf ihre
+ * natuerliche Inhalts-Hoehe (48 px bei einem Item), der Cockpit-Anker
+ * sitzt direkt darunter, und die Upstream-Standardfaelle (jede Action-Bar
+ * ohne Cockpit-Nachbarn) bleiben unberuehrt.
+ *
+ * Der Selektor ist doppelt gescoped:
+ * 1. Nur im `.activitybar`-Kontext (keine andere Composite-Bar betroffen).
+ * 2. Nur wenn die Composite-Bar einen `.keel-cockpit-anchor-bar` enthaelt
+ *    (keine generische Action-Bar-Regel — der Fix greift nur wenn unser
+ *    Anker tatsaechlich gemountet ist).
+ *
+ * `:has()` Browser-Support: Verfuegbar seit Chromium 105 (August 2022).
+ * Der Fork laeuft auf Electron 39 (Chromium 124+) — Support garantiert.
+ *
+ * `!important` ist hier vertretbar: die Upstream-Regel
+ * `.monaco-action-bar { height: 100% }` in `actionbar.css` ist ein harter
+ * Default. Unser Overwrite ist doppelt scoped und deckt nur die exakte
+ * Konstellation (Keel-Anchor-in-ActivityBar-CompositeBar) ab. Ausserhalb
+ * dieser Konstellation existiert die Regel nicht.
+ */
+
+/*
+ * Wurzel-Fix: erstes Action-Bar-Geschwister der Composite-Bar auf
+ * auto-Hoehe, sobald ein Cockpit-Anker in derselben Composite-Bar sitzt.
+ * Das ist der Marketplace-ViewContainer-Bar. `:not(.keel-cockpit-anchor-bar)`
+ * schliesst unseren eigenen Anker-Wrapper aus, damit der seine eigene
+ * auto-Hoehe behaelt und nicht versehentlich einen Loop ausloest.
+ */
+.monaco-workbench .activitybar > .content > .composite-bar:has(> .keel-cockpit-anchor-bar)
+	> .monaco-action-bar.vertical:not(.keel-cockpit-anchor-bar) {
+	height: auto !important;
+}
+
+/*
+ * Gleicher Schutz fuer die innere `ul.actions-container` der Marketplace-
+ * Bar — die Upstream-Regel `.monaco-action-bar .actions-container
+ * { height: 100% }` in `actionbar.css` zieht sonst die Liste wieder auf
+ * 100 % und ueberschreibt den Inhalts-Kollaps von oben.
+ */
+.monaco-workbench .activitybar > .content > .composite-bar:has(> .keel-cockpit-anchor-bar)
+	> .monaco-action-bar.vertical:not(.keel-cockpit-anchor-bar)
+	> .actions-container {
+	height: auto !important;
+}
+
+/*
+ * Aeusseres Action-Bar-Fragment als direkter Kind der `.composite-bar`.
+ * Eigene auto-Hoehe, damit der Anker sich nicht selbst ueber `height: 100%`
+ * aufblaeht. `margin-bottom: 0` schuetzt gegen das `margin-bottom: auto`
+ * der `.composite-bar` in `activitybarpart.css` (der Spacer-Pattern, der
+ * Global-ComositeBar nach unten druecken will — unseren Anker jedoch nicht
+ * betreffen soll).
+ */
+.keel-cockpit-anchor-bar {
+	height: auto;
+	margin-bottom: 0;
+}
+
+/*
+ * Auch die innere `ul.actions-container` des Anker-Wrappers: auto-Hoehe.
+ */
+.keel-cockpit-anchor-bar > .actions-container {
+	height: auto;
+}
+
+/*
+ * Das Action-Item ist ein `<li>` und erbt ueber die Upstream-Regel
+ * `.action-item { display: block; position: relative; cursor: pointer; }`
+ * die Grund-Pointer-Semantik. Die `.icon`-Markerklasse bewirkt, dass die
+ * Upstream-Styling-Pfade fuer Icon-Items greifen. Keine eigenen
+ * Layout-Regeln noetig.
+ *
+ * Outline aus dem Keel-Namespace: Upstream unterdrueckt das Default-Outline
+ * zugunsten des `.active-item-indicator`-Borders (siehe
+ * `activitybarpart.css`: `.activitybar .action-item:focus { outline: 0
+ * !important; }`). Dieser Selektor greift fuer uns automatisch, weil unser
+ * `li.action-item` im Activity-Bar-Scope sitzt.
+ */

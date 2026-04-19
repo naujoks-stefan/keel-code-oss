@@ -340,6 +340,26 @@ export class NativeLocalProcessExtensionHost extends Disposable implements IExte
 			startupTimeoutHandle = setTimeout(() => {
 				this._logService.error(`[LocalProcessExtensionHost]: Extension host did not start in 10 seconds (debugBrk: ${this._isExtensionDevDebugBrk})`);
 
+				// Keel (D-020): In der Keel-Oberflaeche unterdruecken wir den Dev-Jargon-
+				// Toast ("Extension host did not start in 10 seconds...") und zeigen
+				// stattdessen einen Otto-tauglichen Fallback-Toast (Stufe 1). Otto kann
+				// mit dem Original nichts anfangen; der Log-Eintrag oben bleibt fuer
+				// Keel-Team-Debugging erhalten. Das Flag wird via fork-brand.mjs in
+				// product.json gesetzt.
+				// Siehe auch src/vs/keel/notifications/browser/keelNotificationPolicy.ts.
+				if ((this._productService as { readonly keelSilenceExtensionHostToasts?: boolean }).keelSilenceExtensionHostToasts) {
+					this._notificationService.prompt(Severity.Info,
+						// allow-any-unicode-next-line
+						nls.localize('keel.platform.start.slow', "Keel startet langsamer als gewoehnlich. Einen Moment, bitte."),
+						[],
+						{
+							sticky: false,
+							priority: NotificationPriority.DEFAULT,
+						}
+					);
+					return;
+				}
+
 				const msg = this._isExtensionDevDebugBrk
 					? nls.localize('extensionHost.startupFailDebug', "Extension host did not start in 10 seconds, it might be stopped on the first line and needs a debugger to continue.")
 					: nls.localize('extensionHost.startupFail', "Extension host did not start in 10 seconds, that might be a problem.");
