@@ -394,13 +394,17 @@ export class ActivityBarCompositeBar extends PaneCompositeBar {
 		// View Containers action bar
 		this.compositeBarContainer = super.create(this.element);
 
-		// Keel (D-025): Cockpit-Anker direkt nach der View-Container-Liste und
-		// vor dem globalen Account/Manage-Bereich einhaengen. Dadurch landet der
-		// Anker oben unter dem letzten Workbench-View-Icon und erbt den Slot
-		// inklusive Groesse (48px) und Flex-Fluss. Disposable wird am
-		// CompositeBar-Lifecycle registriert, damit Kompakt-Toggle den Anker
-		// sauber aufraeumt.
-		this._register(KeelCockpitAnchor.mount(this.instantiationService, this.element));
+		// Keel (D-025): Cockpit-Anker als Geschwister-Element der ViewContainer-
+		// Action-Bar INNERHALB des `.composite-bar`-Containers einhaengen. Damit
+		// landet der Anker im selben Slot-Fluss wie das letzte ViewContainer-Icon
+		// (z.B. Marketplace) - buendig direkt darunter, ohne Spacer-Gap und mit
+		// identischer Slot-Breite/Hoehe (48px, erbt ueber --activity-bar-width /
+		// --activity-bar-action-height). Der frueher genutzte Mount in
+		// `this.element` (zwischen `.composite-bar` und GlobalCompositeBar) fiel
+		// durch `margin-bottom: auto` auf `.composite-bar` in die Spacer-Mitte -
+		// visuell falsch. Disposable wird am CompositeBar-Lifecycle registriert,
+		// damit Kompakt-Toggle den Anker sauber aufraeumt.
+		this._register(KeelCockpitAnchor.mount(this.instantiationService, this.compositeBarContainer));
 
 		// Global action bar
 		if (this.globalCompositeBar) {

@@ -22,10 +22,11 @@ import {
  * Cockpit-Anker als Activity-Bar-Item unter dem letzten ViewContainer.
  *
  * Der Anker wird vom chirurgischen Patch in `ActivityBarCompositeBar.create()`
- * (Upstream-Datei `activitybarPart.ts`, siehe D-025) direkt zwischen den
- * View-Container-Slots und dem globalen Account-/Manage-Bereich eingehaengt.
- * So landet er garantiert oben unter dem letzten Workbench-View-Icon und
- * erbt Groesse und Fluss der umliegenden Activity-Bar-Slots.
+ * (Upstream-Datei `activitybarPart.ts`, siehe D-025) INNERHALB des
+ * `.composite-bar`-Containers als Geschwister des `.monaco-action-bar`
+ * eingehaengt. So reiht er sich im Block-Flow direkt unter das letzte
+ * ViewContainer-Item (z.B. Marketplace) ein - buendig, ohne Spacer-Gap
+ * und mit identischer Slot-Breite/Hoehe wie die Upstream-Action-Items.
  *
  * Lifecycle-Verantwortung:
  * - Die aufrufende Partbar registriert die zurueckgegebene Disposable im
@@ -41,8 +42,10 @@ export class KeelCockpitAnchor extends Disposable {
 	 * @param instantiationService Workbench-Instantiation-Service zum Aufloesen
 	 *   der benoetigten Services (ICommandService, IEditorService, IHoverService).
 	 * @param parent Container, in den der Anker direkt angehaengt wird. Fuer die
-	 *   Activity-Bar ist das das `element` der `ActivityBarCompositeBar` -
-	 *   zwischen View-Container-Liste und GlobalCompositeBar.
+	 *   Activity-Bar ist das der `.composite-bar`-Container (das Ergebnis von
+	 *   `super.create(this.element)` in `ActivityBarCompositeBar`), sodass der
+	 *   Anker als Geschwister des `.monaco-action-bar` im Block-Flow direkt
+	 *   unter dem letzten ViewContainer-Icon sitzt.
 	 * @returns Disposable, das den Anker wieder abbaut.
 	 */
 	static mount(instantiationService: IInstantiationService, parent: HTMLElement): IDisposable {

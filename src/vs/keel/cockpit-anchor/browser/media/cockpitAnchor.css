@@ -7,12 +7,15 @@
  * Cockpit-Anker in der Activity-Bar (Welle 10, D-025).
  *
  * Der Anker wird vom chirurgischen Patch in `ActivityBarCompositeBar.create()`
- * zwischen der View-Container-Liste und dem GlobalCompositeBar eingehaengt.
- * Er erbt die Activity-Bar-Konventionen (48px hoch, 24px Icon) ueber die
- * Upstream-CSS-Variablen `--activity-bar-width` / `--activity-bar-action-height`
- * / `--activity-bar-icon-size`, die ActivityBarPart beim Umschalten zwischen
- * Standard- und Kompakt-Modus aktualisiert. So skaliert der Anker automatisch
- * mit.
+ * INNERHALB des `.composite-bar`-Containers eingehaengt, als direkter Kind
+ * (Geschwister zum `.monaco-action-bar`, der die ViewContainer-Icons listet).
+ * Dadurch reiht er sich im Block-Flow direkt unter das letzte ViewContainer-
+ * Item (z.B. Marketplace) ein - buendig, ohne Spacer-Gap und mit identischer
+ * Slot-Breite/Hoehe. Er erbt die Activity-Bar-Konventionen (48px hoch, 24px
+ * Icon) ueber die Upstream-CSS-Variablen `--activity-bar-width` /
+ * `--activity-bar-action-height` / `--activity-bar-icon-size`, die
+ * ActivityBarPart beim Umschalten zwischen Standard- und Kompakt-Modus
+ * aktualisiert. So skaliert der Anker automatisch mit.
  */
 
 .keel-cockpit-anchor {
